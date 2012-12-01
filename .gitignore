@@ -1,4 +1,5 @@
 .svn
+*.class
 
 # ignore maven
 dist
@@ -10,6 +11,7 @@ build.log
 .project
 .classpath
 .manager
+.cache
 .scala_dependencies
 .externalToolBuilders
 
