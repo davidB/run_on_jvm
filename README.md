@@ -51,6 +51,8 @@ TDB
 
 TBD
 
+    java -jar run4jl-x.y.z-onejar.jar Toto.java
+
 ### run remote script
 
 TDB

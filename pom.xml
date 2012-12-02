@@ -95,14 +95,79 @@
 
 	<build>
 		<plugins>
-			<!--plugin> <artifactId>maven-shade-plugin</artifactId> <version>1.3.3</version> <executions> <execution> <phase>package</phase> <goals> <goal>shade</goal> </goals> <configuration> 
-				<artifactSet> <excludes> <exclude>*:plexus-container-default</exclude> <exclude>*:plexus-classworlds</exclude> <exclude>*:xbean-reflect</exclude> <exclude>*:google-collections</exclude> 
-				</excludes> </artifactSet> </configuration> </execution> </executions> </plugin -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-jar-plugin</artifactId>
+				<configuration>
+					<archive>
+						<manifest>
+							<mainClass>net_alchim31_runner.Main</mainClass>
+						</manifest>
+					</archive>
+				</configuration>
+			</plugin>
+			<!-- OneJar via onejar-maven-plugin add 0.5s at startup (vs shade) -->
+			<!-- TODO try proguard -->
+			<plugin>
+				<artifactId>maven-shade-plugin</artifactId>
+				<version>1.3.3</version>
+				<executions>
+					<execution>
+						<phase>package</phase>
+						<goals>
+							<goal>shade</goal>
+						</goals>
+						<configuration>
+							<shadedArtifactAttached>true</shadedArtifactAttached>
+							<shadedClassifierName>onejar</shadedClassifierName>
+							<artifactSet>
+								<excludes>
+									<exclude>*:plexus-container-default</exclude>
+									<exclude>*:plexus-classworlds</exclude>
+									<exclude>*:xbean-reflect</exclude>
+									<exclude>*:google-collections</exclude>
+								</excludes>
+							</artifactSet>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<!-- 
+			<plugin>
+				<groupId>com.github.wvengen</groupId>
+				<artifactId>proguard-maven-plugin</artifactId>
+				<version>2.0.7-SNAPSHOT</version>
+				<executions>
+					<execution>
+						<phase>package</phase>
+						<goals>
+							<goal>proguard</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<obfuscate>false</obfuscate>
+					<injar>${project.build.finalName}-onejar.jar</injar>
+					<outjar>${project.build.finalName}-small.jar</outjar>
+					<includeDependency>false</includeDependency>
+					<outputDirectory>${project.build.directory}</outputDirectory>
+					<proguardInclude>${basedir}/proguard.conf</proguardInclude>
+					<options>
+                        <option>-allowaccessmodification</option>
+                        <option>-keep public class net_alchim31_runner.Main { *; }</option>
+                    </options>
+					<libs>
+						<lib>${java.home}/lib/rt.jar</lib>
+						<lib>${java.home}/lib/jsse.jar</lib>
+					</libs>
+				</configuration>
+			</plugin>
 			<plugin>
 				<groupId>org.codehaus.mojo</groupId>
 				<artifactId>animal-sniffer-maven-plugin</artifactId>
 				<version>1.6</version>
 			</plugin>
+			-->
 		</plugins>
 	</build>
 </project>
