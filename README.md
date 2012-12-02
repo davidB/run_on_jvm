@@ -6,6 +6,8 @@ Some possible usages :
 
 * share runnable sample code via gist, email with all the dependencies info
 * create build script (I will use it for [plob](https://github.com/davidB/plob) )
+* provide single source file tool
+* provide single source file lib, plugin
 
 ## Alternatives
 
@@ -15,12 +17,14 @@ Some possible usages :
 
 * [POMStrap](http://jfluid.com/) is able to load application dependency as they are declared in Maven 2 project file, and execute each dependency in its own classloader without inhering from its parent avoiding version conflict.
 * [MOP](http://mop.fusesource.org/) is a small utility for executing Java programs which are stored as artifacts like jars or bundles in a Maven repository.
+* [Conscript](https://github.com/n8han/conscript) is a tool for installing and updating Scala software programs. It does less than you think, because the [sbt launcher](https://github.com/harrah/xsbt/tree/0.13/launch) does more than you think.
+* Some plugins for build tool : [Exec Maven Plugin](http://mojo.codehaus.org/exec-maven-plugin/), [sbt-start-script](https://github.com/sbt/sbt-start-script) 
 
 ## Features
 
 ### DONE
 
-Nothing, I practice RDD (README Drive Development ;-) )
+Nothing, I practice RDD (README Driven Development ;-) )
 
 ### TBD
 
@@ -54,6 +58,8 @@ TDB
 ### conventions
 
 TBD
+* filename - extension == mainClassname (default package)
+* version of local files == md5 encoding base64 of the file
 
 # Contribute
 
@@ -68,7 +74,9 @@ You have to install maven :
  
 # Motivations
 
-I would like to be able to use java/scala (or any other jvm language) as shell scripting (like python, ruby,...).
+I would like :
+* to be able to use java/scala (or any other jvm language) as shell scripting (like python, ruby,...).
+* to provide single source file tool, lib, plugin
 
 ## T0
 
@@ -109,4 +117,3 @@ The first version was start in 2010 an written in scala, but I don't find enough
 ## T2
 
 I rewite previous code in java, to be able to run .java and .scala (any version !!), and to be lighter for possible integration.
- 
