@@ -1,25 +1,14 @@
 package net_alchim31_runner;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.util.HashMap;
-import java.util.Properties;
-import java.util.StringTokenizer;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
-import org.codehaus.plexus.util.IOUtil;
-import org.codehaus.plexus.util.StringUtils;
 import org.sonatype.aether.RepositoryEvent.EventType;
 import org.sonatype.aether.RepositoryListener;
 import org.sonatype.aether.RepositorySystemSession;
 import org.sonatype.aether.artifact.Artifact;
-import org.sonatype.aether.graph.Dependency;
 import org.sonatype.aether.impl.ArtifactDescriptorReader;
 import org.sonatype.aether.impl.ArtifactResolver;
 import org.sonatype.aether.impl.VersionResolver;
-import org.sonatype.aether.repository.RemoteRepository;
 import org.sonatype.aether.resolution.ArtifactDescriptorException;
 import org.sonatype.aether.resolution.ArtifactDescriptorRequest;
 import org.sonatype.aether.resolution.ArtifactDescriptorResult;
@@ -30,7 +19,6 @@ import org.sonatype.aether.resolution.VersionRequest;
 import org.sonatype.aether.resolution.VersionResolutionException;
 import org.sonatype.aether.spi.locator.Service;
 import org.sonatype.aether.spi.locator.ServiceLocator;
-import org.sonatype.aether.util.artifact.DefaultArtifact;
 import org.sonatype.aether.util.artifact.SubArtifact;
 import org.sonatype.aether.util.listener.DefaultRepositoryEvent;
 
@@ -38,13 +26,13 @@ public class ArtifactDescriptorReader4Script implements ArtifactDescriptorReader
   final static String      LAYOUT_M2   = "default";
   final static String      LAYOUT_GIST = "gist";
   
-  private ScriptsCache _cache;
+  private ScriptService _scriptService;
   private VersionResolver  _versionResolver;
   private ArtifactResolver _artifactResolver;
 
   @Override
   public void initService(ServiceLocator locator) {
-    _cache = new ScriptsCache();
+    _scriptService = locator.getService(ScriptService.class);
     // _logger = locator.getService(Logger.class);
     // setRemoteRepositoryManager(locator.getService(RemoteRepositoryManager.class));
     _versionResolver = locator.getService(VersionResolver.class);
@@ -111,37 +99,15 @@ public class ArtifactDescriptorReader4Script implements ArtifactDescriptorReader
     ArtifactResult resolveResult = _artifactResolver.resolveArtifact(session, resolveRequest);
     result.setRepository(resolveResult.getRepository());
     sourceArtifact = resolveResult.getArtifact();
-    return readInfoFromScriptSource(_cache.findContent(sourceArtifact.getFile()), result);
+    return readFromScriptInfo(_scriptService.findScriptInfo(sourceArtifact.getFile().toURI()), result);
   }
 
-  //TODO build a more clean/efficient parsing of the data (may be with parboiled ?)
-  //HACKME protected to allow unit test
-  protected final ArtifactDescriptorResult readInfoFromScriptSource(String data, ArtifactDescriptorResult result) throws Exception {
-    Pattern setRegEx = Pattern.compile("set\\s+(\\S+)\\s+(\\S+)");
-    Pattern repoM2RegEx = Pattern.compile("repo\\s+(\\S+)\\s+m2:((http|file):\\S+)");
-    Pattern repoRawRegEx = Pattern.compile("repo\\s+(\\S+)\\s+raw:((http|file):\\S+\\$\\{artifactId\\}\\S+)$");
-    //Pattern artifactRegEx = Pattern.compile("from\\s+([\\w\\-\\._\\$\\{\\}]+):([\\w\\-\\._\\$\\{\\}]+):([\\w\\-\\._\\$\\{\\}]+)(:([\\w\\-\\._]+))?" );
-    //<groupId>:<artifactId>[:<extension>[:<classifier>]]:<version>
-    Pattern artifactRegEx = Pattern.compile("from\\s+(\\S+)" );
-    StringTokenizer t = new StringTokenizer(data, "\n\r", false);
-    Properties props = new Properties();
-    while(t.hasMoreTokens()) {
-      String line = t.nextToken();
-      int p = line.indexOf("//#");
-      if (p > -1) {
-        String stmt = line.substring(p + 3);
-        Matcher m;
-        if ((m = setRegEx.matcher(stmt)) != null && m.matches()) {
-          props.setProperty(m.group(1), m.group(2));
-        } else if ((m = repoM2RegEx.matcher(stmt)) != null && m.matches()) {
-          result.addRepository(new RemoteRepository(m.group(1), "default", StringUtils.interpolate(m.group(2), props)));
-        } else if ((m = repoRawRegEx.matcher(stmt)) != null && m.matches()) {
-          result.addRepository(new RemoteRepository(m.group(1), "raw", StringUtils.interpolate(m.group(2), props)));
-        } else if ((m = artifactRegEx.matcher(stmt)) != null && m.matches()) {
-          result.addDependency(new Dependency(new DefaultArtifact(StringUtils.interpolate(m.group(1), props)), "compile"));
-        }
-      }
-    }
+  private final ArtifactDescriptorResult readFromScriptInfo(ScriptInfo info, ArtifactDescriptorResult result) throws Exception {
+    result.setArtifact(info.artifact);
+    result.getProperties().putAll(info.properties);
+    result.setDependencies(info.dependencies);
+    result.setManagedDependencies(info.managedDependencies);
+    result.setRepositories(info.repositories);
     return result;
   }
 
@@ -155,31 +121,3 @@ public class ArtifactDescriptorReader4Script implements ArtifactDescriptorReader
   }
 }
 
-class ScriptsCache {
-  static class Entry {
-    File file;
-    String content;
-    public Entry(File file0, String content0) {
-      super();
-      this.file = file0;
-      this.content = content0;
-    }
-  }
-  private final HashMap<File, Entry> _map = new HashMap<File, Entry>();
-  
-  @SuppressWarnings({ "null", "resource" })
-  public String findContent(File key) throws Exception {
-    Entry b = _map.get(key);
-    if (b == null) {
-      FileInputStream input = new FileInputStream(key);
-      try {
-        String v = IOUtil.toString(input, "UTF-8");
-        b = new Entry(key, v);
-        _map.put(key, b);
-      } finally {
-        IOUtil.close(input);
-      }
-    }
-    return b == null ? null : b.content;
-  }
-}

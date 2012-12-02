@@ -3,7 +3,6 @@ package net_alchim31_runner;
 import java.io.File;
 import java.util.List;
 
-import org.apache.maven.wagon.Wagon;
 import org.sonatype.aether.RepositorySystem;
 import org.sonatype.aether.RepositorySystemSession;
 import org.sonatype.aether.collection.CollectRequest;
@@ -11,17 +10,13 @@ import org.sonatype.aether.collection.DependencyGraphTransformer;
 import org.sonatype.aether.collection.DependencyManager;
 import org.sonatype.aether.collection.DependencySelector;
 import org.sonatype.aether.collection.DependencyTraverser;
-import org.sonatype.aether.connector.file.FileRepositoryConnectorFactory;
-import org.sonatype.aether.connector.wagon.WagonProvider;
-import org.sonatype.aether.connector.wagon.WagonRepositoryConnectorFactory;
 import org.sonatype.aether.graph.Dependency;
 import org.sonatype.aether.graph.DependencyNode;
-import org.sonatype.aether.impl.ArtifactDescriptorReader;
-import org.sonatype.aether.impl.internal.DefaultServiceLocator;
 import org.sonatype.aether.repository.LocalRepository;
 import org.sonatype.aether.repository.RemoteRepository;
 import org.sonatype.aether.resolution.DependencyRequest;
-import org.sonatype.aether.spi.connector.RepositoryConnectorFactory;
+import org.sonatype.aether.spi.locator.Service;
+import org.sonatype.aether.spi.locator.ServiceLocator;
 import org.sonatype.aether.util.DefaultRepositorySystemSession;
 import org.sonatype.aether.util.artifact.DefaultArtifactType;
 import org.sonatype.aether.util.artifact.DefaultArtifactTypeRegistry;
@@ -40,41 +35,24 @@ import org.sonatype.aether.util.graph.traverser.FatArtifactTraverser;
 import org.sonatype.aether.util.repository.DefaultAuthenticationSelector;
 import org.sonatype.aether.util.repository.DefaultMirrorSelector;
 import org.sonatype.aether.util.repository.DefaultProxySelector;
-import org.sonatype.maven.wagon.AhcWagon;
 
 //http://git.eclipse.org/c/aether/aether-demo.git/tree/aether-demo-snippets/src/main/java/org/eclipse/aether/examples/util
-public class AetherHelper {
+public class DependencyService implements Service {
 
-  static RepositorySystem newRepositorySystem() {
-    /*
-     * Aether's components implement org.eclipse.aether.spi.locator.Service to
-     * ease manual wiring and using the prepopulated DefaultServiceLocator, we
-     * only need to register the repository connector factories.
-     */
-    DefaultServiceLocator locator = new DefaultServiceLocator();
-    locator.addService(RepositoryConnectorFactory.class, FileRepositoryConnectorFactory.class);
-    locator.addService(RepositoryConnectorFactory.class, WagonRepositoryConnectorFactory.class);
-    locator.setServices(WagonProvider.class, new WagonProvider() {
-      @Override
-      public Wagon lookup(String roleHint) throws Exception {
-        if ("http".equals(roleHint)) {
-          return new AhcWagon();
-        }
-        return null;
-      }
+  private RepositorySystem _system;
 
-      @Override
-      public void release(Wagon wagon) {}
-    });
-    locator.setService(ArtifactDescriptorReader.class, ArtifactDescriptorReader4Script.class);
-
-    return locator.getService(RepositorySystem.class);
+  public DependencyService() {
+  }
+  
+  @Override
+  public void initService(ServiceLocator locator) {
+    _system = locator.getService(RepositorySystem.class);
   }
 
   // see http://wiki.eclipse.org/Aether/Creating_a_Repository_System_Session
   // see
   // http://git.eclipse.org/c/aether/aether-ant.git/tree/src/main/java/org/eclipse/aether/ant/AntRepoSys.java#n305
-  static RepositorySystemSession newSession(RepositorySystem system) {
+  RepositorySystemSession newSession() {
     DefaultRepositorySystemSession session = new DefaultRepositorySystemSession();
     session.setMirrorSelector(new DefaultMirrorSelector());
     session.setAuthenticationSelector(new DefaultAuthenticationSelector());
@@ -128,24 +106,17 @@ public class AetherHelper {
 
     // TODO set local repo dir to maven local repo dir
     LocalRepository localRepo = new LocalRepository("target/local-repo");
-    session.setLocalRepositoryManager(system.newLocalRepositoryManager(localRepo));
-
+    session.setLocalRepositoryManager(_system.newLocalRepositoryManager(localRepo));
     // session.setTransferListener( new ConsoleTransferListener() );
     // session.setRepositoryListener( new ConsoleRepositoryListener() );
 
     return session;
   }
-  
-  static ResolveResult resolve(List<Dependency> dependencies, List<RemoteRepository> remoteRepositories) throws Exception {
-    RepositorySystem system = newRepositorySystem();
-    RepositorySystemSession session = newSession(system);
-    return resolve(system, session, dependencies, remoteRepositories);
-  }
-  
-  static ResolveResult resolve(RepositorySystem system, RepositorySystemSession session, List<Dependency> dependencies, List<RemoteRepository> remoteRepositories) throws Exception {
-    CollectRequest collectRequest = new CollectRequest(dependencies, null, remoteRepositories);
+
+  ResolveResult resolve(RepositorySystemSession session, List<Dependency> dependencies, List<Dependency> managedDependencies, List<RemoteRepository> remoteRepositories) throws Exception {
+    CollectRequest collectRequest = new CollectRequest(dependencies, managedDependencies, remoteRepositories);
     DependencyRequest dependencyRequest = new DependencyRequest(collectRequest, null);
-    DependencyNode rootNode = system.resolveDependencies(session, dependencyRequest).getRoot();
+    DependencyNode rootNode = _system.resolveDependencies(session, dependencyRequest).getRoot();
     PreorderNodeListGenerator nlg = new PreorderNodeListGenerator();
     rootNode.accept(nlg);
 
@@ -164,6 +135,7 @@ public class AetherHelper {
     }
     
   }
+
   
   // public static File findUserSettings() {
   // File userHome = new File( System.getProperty( "user.home" ) );

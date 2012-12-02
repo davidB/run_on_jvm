@@ -79,7 +79,11 @@
 			<artifactId>wagon-ahc</artifactId>
 			<version>1.2.1</version>
 		</dependency>
-
+		<dependency>
+			<groupId>org.apache.maven</groupId>
+			<artifactId>maven-aether-provider</artifactId>
+			<version>3.0.4</version>
+		</dependency>
 		<!-- Test -->
 		<dependency>
 			<groupId>junit</groupId>

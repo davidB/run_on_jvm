@@ -1,33 +1,89 @@
 package net_alchim31_runner;
 
+import java.io.File;
+import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.net.URI;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
 
+import org.apache.maven.repository.internal.MavenServiceLocator;
+import org.apache.maven.wagon.Wagon;
 import org.codehaus.plexus.util.IOUtil;
-import java.io.InputStream;
+import org.sonatype.aether.RepositorySystemSession;
+import org.sonatype.aether.connector.file.FileRepositoryConnectorFactory;
+import org.sonatype.aether.connector.wagon.WagonProvider;
+import org.sonatype.aether.connector.wagon.WagonRepositoryConnectorFactory;
+import org.sonatype.aether.impl.ArtifactDescriptorReader;
+import org.sonatype.aether.spi.connector.RepositoryConnectorFactory;
+import org.sonatype.aether.spi.locator.ServiceLocator;
+import org.sonatype.maven.wagon.AhcWagon;
 
 public class Main {
+	public static final List<String> EMPTY_LIST_STRING = Collections.emptyList();
 	
 	public static void main(String[] args) {
+	  URI uri = null;
 		try {
-			run(compile(new URI(args[0])));
+		  uri = new URI(args[0]);
+		  if (!uri.isAbsolute()) {
+		    uri = new File(args[0]).getAbsoluteFile().toURI();
+		  }
+			run(compile(uri).addArgs(args, 1));
 		} catch(Exception exc) {
+		  System.err.println("uri : '" + uri + "'");
 			exc.printStackTrace();
 		}
 	}
+	
+  static ServiceLocator newServiceLocator() {
+    /*
+     * Aether's components implement org.eclipse.aether.spi.locator.Service to
+     * ease manual wiring and using the prepopulated DefaultServiceLocator, we
+     * only need to register the repository connector factories.
+     */
+    MavenServiceLocator locator = new MavenServiceLocator();
+    locator.addService(RepositoryConnectorFactory.class, FileRepositoryConnectorFactory.class);
+    locator.addService(RepositoryConnectorFactory.class, WagonRepositoryConnectorFactory.class);
+    locator.setServices(WagonProvider.class, new WagonProvider() {
+      @Override
+      public Wagon lookup(String roleHint) throws Exception {
+        if ("http".equals(roleHint)) {
+          return new AhcWagon();
+        }
+        return null;
+      }
 
+      @Override
+      public void release(Wagon wagon) {}
+    });
+    locator.addService(CompilerService.class, CompilerService.class);
+    locator.setService(DependencyService.class, DependencyService.class);
+    locator.setService(ScriptService.class, ScriptService.class);
+    locator.setService(ArtifactDescriptorReader.class, ArtifactDescriptorReader4Script.class);
+    return locator;
+  }
+  
+  
+  //TODO fork a new process if JvmArg or fork options
 	public static void run(RunInfo v) throws Exception {
-		URL[] urls = new URL[v.classpath.length];
-		for(int i = v.classpath.length -1; i > -1; i--) {
-			urls[i] = v.classpath[i].toURL();
+		URL[] urls = new URL[v.classpath.size()];
+		int i = 0;
+		for(URI uri : v.classpath) {
+			urls[i] = uri.toURL();
+			i++;
 		}
-		URLClassLoader cl = new URLClassLoader(urls, ClassLoader.getSystemClassLoader());
+		URLClassLoader cl = new URLClassLoader(urls, null/*ClassLoader.getSystemClassLoader()*/);
 		try {
+		  //TODO Switch current ClassLoader
 			Class<?> clazz = cl.loadClass(v.className);
 			Method m = clazz.getMethod("main", String[].class);
-			m.invoke(null, (Object)v.args);
+			m.invoke(null, (Object)v.args.toArray(new String[]{}));
 		} catch(Exception exc) {
 			//TODO log the RunInfo to help debug cause of the exception
 			throw exc;
@@ -37,8 +93,46 @@ public class Main {
 	}
 	
 	public static RunInfo compile(URI v) throws Exception {
-		
-		return new RunInfo(new URI[]{}, "", new String[]{}, new String[]{});
+	  ServiceLocator locator = newServiceLocator();
+    ScriptInfo si = locator.getService(ScriptService.class).findScriptInfo(v);
+    DependencyService ds = locator.getService(DependencyService.class);
+    RepositorySystemSession session = ds.newSession();
+
+    //    File jar = new File(src.getAbsolutePath() + ".jar");
+    File jar = new File(session.getLocalRepository().getBasedir(), session.getLocalRepositoryManager().getPathForLocalArtifact(si.artifact) + ".jar");
+    System.err.println("jar : " + jar);
+    if (si.dependencies.size() == 0) {
+      if (!jar.exists()) {
+        File src = si.artifact.getFile();
+        CompilerService cs = null;
+        for (CompilerService cs0 : locator.getServices(CompilerService.class)) {
+          if (cs0.accept(src)) {
+            cs = cs0;
+            break;
+          }
+        }
+        if (cs == null) {
+          throw new IllegalStateException("no compilers accept " + src);
+        }
+        jar.getParentFile().mkdirs();
+        cs.compileToJar(jar, src, new LinkedList<File>(), new LinkedList<String>());
+      }
+      return new RunInfo(si.properties.get(ScriptInfo.mainClassName).toString(), Arrays.asList(jar.toURI()), EMPTY_LIST_STRING, EMPTY_LIST_STRING);
+    }
+    //ArtifactDescriptorReader adr = locator.getService(ArtifactDescriptorReader.class);
+    //ArtifactDescriptorResult ad = adr.readArtifactDescriptor(session, new ArtifactDescriptorRequest(artifact, null, null));
+    DependencyService.ResolveResult r = ds.resolve(session, si.dependencies, si.managedDependencies, si.repositories);
+    
+		return new RunInfo("", toURIs(r.resolvedFiles), EMPTY_LIST_STRING, EMPTY_LIST_STRING);
+	}
+	
+	//@pseudo v.map(_.toURI)
+	private static List<URI> toURIs(List<File> v) throws Exception {
+	  List<URI> b = new ArrayList<URI>(v.size());
+	  for(File f : v) {
+	    b.add(f.toURI());
+	  }
+	  return b;
 	}
 	
 	public static String toString(URI v) throws Exception {
@@ -55,16 +149,32 @@ public class Main {
 
 class RunInfo {
 	public final String className;
-	public final String[] args;
-	public final URI[] classpath;
-	public final String[] jvmArgs;
+	public final List<String> args;
+	public final List<URI> classpath;
+	public final List<String> jvmArgs;
 
-	public RunInfo(URI[] classpath0, String className0, String[] args0, String[] jvmArgs0) {
+	public RunInfo(String className0, List<URI> classpath0, List<String> args0, List<String> jvmArgs0) {
 		super();
 		this.classpath = classpath0;
 		this.className = className0;
 		this.args = args0;
 		this.jvmArgs = jvmArgs0;
 	}
+	
+	public RunInfo addArgs(List<String> v) throws Exception {
+	  List<String> a = new ArrayList<String>(args.size() + v.size());
+	  a.addAll(args);
+	  a.addAll(v);
+	  return new RunInfo(className, classpath, a, jvmArgs);
+	}
+
+  public RunInfo addArgs(String[] v, int offset) throws Exception {
+    List<String> a = new ArrayList<String>(args.size() + v.length);
+    a.addAll(args);
+    for(int i = offset; i < v.length; i++) {
+      a.add(v[i]);
+    }
+    return new RunInfo(className, classpath, a, jvmArgs);
+  }
 }
 
