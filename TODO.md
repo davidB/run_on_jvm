@@ -17,3 +17,4 @@
 * on exception, dump to stderr : log, context (classpath, dependency tree, ...)
 * command to clean persistant cache (old version compiled + not compiled)
 * manage several version of compiler (java_1_6, java_1_7, java_1_8, scala_2_9, scala_2_10,...)
+* try to provide CompilerService for : scala, groovy, javascript (via bsf)
