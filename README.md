@@ -18,7 +18,7 @@ Some possible usages :
 * [POMStrap](http://jfluid.com/) is able to load application dependency as they are declared in Maven 2 project file, and execute each dependency in its own classloader without inhering from its parent avoiding version conflict.
 * [MOP](http://mop.fusesource.org/) is a small utility for executing Java programs which are stored as artifacts like jars or bundles in a Maven repository.
 * [Conscript](https://github.com/n8han/conscript) is a tool for installing and updating Scala software programs. It does less than you think, because the [sbt launcher](https://github.com/harrah/xsbt/tree/0.13/launch) does more than you think.
-* Some plugins for build tool : [Exec Maven Plugin](http://mojo.codehaus.org/exec-maven-plugin/), [sbt-start-script](https://github.com/sbt/sbt-start-script) 
+* Some plugins for build tool : [Exec Maven Plugin](http://mojo.codehaus.org/exec-maven-plugin/), [sbt-start-script](https://github.com/sbt/sbt-start-script)
 
 ## Features
 
@@ -34,7 +34,7 @@ Nothing, I practice RDD (README Driven Development ;-) )
 * Download dependencies (direct + transitive) into local cache ($HOME/.m2/repository) from maven's repositories
 * Build classpath from local caches
 * Cache classpath result and reuse it for next run (+ option to force recomputation)
-* Support Windows 
+* Support Windows
 
 ## Install
 
@@ -49,9 +49,25 @@ TDB
 
 ### run locale script
 
-TBD
 
-    java -jar run4jl-x.y.z-onejar.jar Toto.java
+
+    java -jar run_on_jvm-x.y.z-onejar.jar Toto.java
+
+#### Overhead info
+
+For an already compiled classes with no dependencies :
+
+    ➜  run_on_jvm git:(master) ✗ time java -cp target/local-repo/HelloWorld/drVJ0dfmJbHvG1Qx.iCC9g/HelloWorld-drVJ0dfmJbHvG1Qx.iCC9g.java.jar HelloWorld
+    Hello World !
+    java -cp  HelloWorld  0,05s user 0,01s system 97% cpu 0,065 total
+
+    ➜  run_on_jvm git:(master) ✗ time java -jar target/run_on_jvm-0.1.0-SNAPSHOT-onejar.jar examples/HelloWorld.java
+    Hello World !
+    java -jar target/run_on_jvm-0.1.0-SNAPSHOT-onejar.jar examples/HelloWorld.jav  0,20s user 0,02s system 120% cpu 0,183 total
+
+    ➜  run_on_jvm git:(master) ✗ time target/appassembler/bin/roj examples/HelloWorld.java
+    Hello World !
+    target/appassembler/bin/roj examples/HelloWorld.java  0,24s user 0,03s system 132% cpu 0,206 total
 
 ### run remote script
 
@@ -63,7 +79,9 @@ TBD
 * filename - extension == mainClassname (default package)
 * version of local files == md5 encoding base64 of the file
 
-# Contribute
+# Contributing
+
+Anyone and everyone is welcome to contribute.
 
 * via issue, doc, blog
 * via fork/pull requet
@@ -73,7 +91,7 @@ TBD
 You have to install maven :
 
     mvn package
- 
+
 # Motivations
 
 I would like :
@@ -82,15 +100,15 @@ I would like :
 
 ## T0
 
-Scala already have this kind of feature via a command line call: 
+Scala already have this kind of feature via a command line call:
 
     $> scala xxxx.scala
-    
+
 or a little more complex via a script like :
 
 	#!/bin/sh
 	exec scala -save -nc $0 $*
-	
+
 	# If you have scala in the PATH you can call your script like this one
 	# if you need some jar to run the script, use something like the code above
 	#SCRIPT="$(cd "${0%/*}" 2>/dev/null; echo "$PWD"/"${0##*/}")"
@@ -98,14 +116,14 @@ or a little more complex via a script like :
 	#exec scala -save -nc -cp "$DIR/lib/aaaaa.jar" $0 $*
 	::!#
 	// now it's pure scala code
-	
+
 	object Main {
 	  def main(args : Array[String]) {
 	    println("A simple Scala script")
 	    println(args.mkString("[ ", ", ", " ]"))
 	  }
 	}
- 
+
 BUT I also would like :
 * to use maven repositories, ...
 * to use script from other script (as lib, plugin, ...)

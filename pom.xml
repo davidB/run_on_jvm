@@ -1,7 +1,7 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>net.alchim31.runner</groupId>
-	<artifactId>run4jl</artifactId>
+	<artifactId>run_on_jvm</artifactId>
 	<version>0.1.0-SNAPSHOT</version>
 	<name>${project.artifactId}</name>
 	<description>A tool to run jvm script (java, scala, ...) with dependencies</description>
@@ -168,6 +168,31 @@
 				<version>1.6</version>
 			</plugin>
 			-->
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>appassembler-maven-plugin</artifactId>
+				<version>1.3</version>
+				<executions>
+					<execution>
+						<phase>package</phase>
+						<goals>
+							<goal>assemble</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+				 	<licenseHeaderFile>${basedir}/UNLICENSE</licenseHeaderFile>
+				 	<repositoryName>lib</repositoryName>
+					<repositoryLayout>flat</repositoryLayout>
+					<useWildcardClassPath>true</useWildcardClassPath>
+					<programs>
+						<program>
+							<mainClass>net_alchim31_runner.Main</mainClass>
+							<name>roj</name>
+						</program>
+					</programs>
+				</configuration>
+			</plugin>
 		</plugins>
 	</build>
 </project>
