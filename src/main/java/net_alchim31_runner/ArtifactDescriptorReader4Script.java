@@ -1,6 +1,7 @@
 package net_alchim31_runner;
 
 import java.io.FileNotFoundException;
+import java.util.HashMap;
 
 import org.sonatype.aether.RepositoryEvent.EventType;
 import org.sonatype.aether.RepositoryListener;
@@ -104,7 +105,9 @@ public class ArtifactDescriptorReader4Script implements ArtifactDescriptorReader
 
   private final ArtifactDescriptorResult readFromScriptInfo(ScriptInfo info, ArtifactDescriptorResult result) throws Exception {
     result.setArtifact(info.artifact);
-    result.getProperties().putAll(info.properties);
+    HashMap<String, Object> m = new HashMap<>(result.getProperties());
+    m.putAll(info.properties);
+    result.setProperties(m);
     result.setDependencies(info.dependencies);
     result.setManagedDependencies(info.managedDependencies);
     result.setRepositories(info.repositories);

@@ -84,6 +84,11 @@
 			<artifactId>maven-aether-provider</artifactId>
 			<version>3.0.4</version>
 		</dependency>
+		<dependency>
+			<groupId>org.codehaus.plexus</groupId>
+			<artifactId>plexus-classworlds</artifactId>
+			<version>2.4.2</version>
+		</dependency>
 		<!-- Test -->
 		<dependency>
 			<groupId>junit</groupId>
@@ -181,8 +186,8 @@
 					</execution>
 				</executions>
 				<configuration>
-				 	<licenseHeaderFile>${basedir}/UNLICENSE</licenseHeaderFile>
-				 	<repositoryName>lib</repositoryName>
+					<licenseHeaderFile>${basedir}/UNLICENSE</licenseHeaderFile>
+					<repositoryName>lib</repositoryName>
 					<repositoryLayout>flat</repositoryLayout>
 					<useWildcardClassPath>true</useWildcardClassPath>
 					<programs>

@@ -7,7 +7,6 @@ import java.net.URI;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -15,6 +14,7 @@ import java.util.List;
 import org.apache.maven.repository.internal.MavenServiceLocator;
 import org.apache.maven.wagon.Wagon;
 import org.codehaus.plexus.util.IOUtil;
+import org.codehaus.plexus.util.StringUtils;
 import org.sonatype.aether.RepositorySystemSession;
 import org.sonatype.aether.connector.file.FileRepositoryConnectorFactory;
 import org.sonatype.aether.connector.wagon.WagonProvider;
@@ -99,31 +99,37 @@ public class Main {
     RepositorySystemSession session = ds.newSession();
 
     //    File jar = new File(src.getAbsolutePath() + ".jar");
-    File jar = new File(session.getLocalRepository().getBasedir(), session.getLocalRepositoryManager().getPathForLocalArtifact(si.artifact) + ".jar");
-    System.err.println("jar : " + jar);
-    if (si.dependencies.size() == 0) {
-      if (!jar.exists()) {
-        File src = si.artifact.getFile();
-        CompilerService cs = null;
-        for (CompilerService cs0 : locator.getServices(CompilerService.class)) {
-          if (cs0.accept(src)) {
-            cs = cs0;
-            break;
-          }
-        }
-        if (cs == null) {
-          throw new IllegalStateException("no compilers accept " + src);
-        }
-        jar.getParentFile().mkdirs();
-        cs.compileToJar(jar, src, new LinkedList<File>(), new LinkedList<String>());
-      }
-      return new RunInfo(si.properties.get(ScriptInfo.mainClassName).toString(), Arrays.asList(jar.toURI()), EMPTY_LIST_STRING, EMPTY_LIST_STRING);
+    List<File> classpath = new LinkedList<File>();
+    if (si.dependencies.size() > 0) {
+      //ArtifactDescriptorReader adr = locator.getService(ArtifactDescriptorReader.class);
+      //ArtifactDescriptorResult ad = adr.readArtifactDescriptor(session, new ArtifactDescriptorRequest(artifact, null, null));
+      DependencyService.ResolveResult r = ds.resolve(session, si.dependencies, si.managedDependencies, si.repositories);
+      classpath = r.resolvedFiles;
     }
-    //ArtifactDescriptorReader adr = locator.getService(ArtifactDescriptorReader.class);
-    //ArtifactDescriptorResult ad = adr.readArtifactDescriptor(session, new ArtifactDescriptorRequest(artifact, null, null));
-    DependencyService.ResolveResult r = ds.resolve(session, si.dependencies, si.managedDependencies, si.repositories);
-    
-		return new RunInfo("", toURIs(r.resolvedFiles), EMPTY_LIST_STRING, EMPTY_LIST_STRING);
+    File jar = new File(session.getLocalRepository().getBasedir(), session.getLocalRepositoryManager().getPathForLocalArtifact(si.artifact) + ".jar");
+//    System.err.println("dep : " + StringUtils.join(si.dependencies.iterator(), ":"));
+//    System.err.println("cp  : " + StringUtils.join(classpath.iterator(), ":"));
+//    System.err.println("jar : " + jar);
+
+    if (!jar.exists()) {
+      File src = si.artifact.getFile();
+      CompilerService cs = null;
+      for (CompilerService cs0 : locator.getServices(CompilerService.class)) {
+        if (cs0.accept(src)) {
+          cs = cs0;
+          break;
+        }
+      }
+      if (cs == null) {
+        throw new IllegalStateException("no compilers accept " + src);
+      }
+      jar.getParentFile().mkdirs();
+      if (!cs.compileToJar(jar, src, classpath, new LinkedList<String>())) {
+        throw new Exception("Fail to compile");
+      }
+    }
+    classpath.add(jar);
+    return new RunInfo(si.properties.get(ScriptInfo.mainClassName).toString(), toURIs(classpath), EMPTY_LIST_STRING, EMPTY_LIST_STRING);
 	}
 	
 	//@pseudo v.map(_.toURI)
