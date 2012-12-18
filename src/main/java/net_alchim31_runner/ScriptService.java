@@ -10,6 +10,8 @@ import java.util.StringTokenizer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.tools.FileObject;
+
 import org.codehaus.plexus.util.Base64;
 import org.codehaus.plexus.util.FileUtils;
 import org.codehaus.plexus.util.IOUtil;
@@ -126,18 +128,18 @@ public class ScriptService implements Service {
     return b;
   }
 
-  @SuppressWarnings({ "resource" })
   public String findContent(URI key) throws Exception {
     CacheEntry b = findOrCreate(key);
     if (b.content == null) {
-      InputStream input = key.toURL().openStream();
-      try {
+      try(InputStream input = key.toURL().openStream()) {
         b.content = IOUtil.toString(input, "UTF-8");
-      } finally {
-        IOUtil.close(input);
       }
     }
     return b.content;
+  }
+
+  public FileObject findFileObject(final URI key) throws Exception {
+    return new StringFileObject(key, findContent(key));
   }
 
   public ScriptInfo findScriptInfo(URI key) throws Exception {
@@ -165,3 +167,5 @@ public class ScriptService implements Service {
     
   }
 }
+
+

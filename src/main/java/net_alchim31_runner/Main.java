@@ -7,14 +7,17 @@ import java.net.URI;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
+import javax.tools.DiagnosticCollector;
+import javax.tools.FileObject;
+
 import org.apache.maven.repository.internal.MavenServiceLocator;
 import org.apache.maven.wagon.Wagon;
 import org.codehaus.plexus.util.IOUtil;
-import org.codehaus.plexus.util.StringUtils;
 import org.sonatype.aether.RepositorySystemSession;
 import org.sonatype.aether.connector.file.FileRepositoryConnectorFactory;
 import org.sonatype.aether.connector.wagon.WagonProvider;
@@ -24,6 +27,7 @@ import org.sonatype.aether.spi.connector.RepositoryConnectorFactory;
 import org.sonatype.aether.spi.locator.ServiceLocator;
 import org.sonatype.maven.wagon.AhcWagon;
 
+//TODO remove useless service, cache when no longer needed (after compile) 
 public class Main {
 	public static final List<String> EMPTY_LIST_STRING = Collections.emptyList();
 	
@@ -62,7 +66,8 @@ public class Main {
       @Override
       public void release(Wagon wagon) {}
     });
-    locator.addService(CompilerService.class, CompilerService.class);
+    locator.addService(CompilerService.class, CompilerService4Java.class);
+    locator.addService(CompilerService.class, CompilerService4Rhino.class);
     locator.setService(DependencyService.class, DependencyService.class);
     locator.setService(ScriptService.class, ScriptService.class);
     locator.setService(ArtifactDescriptorReader.class, ArtifactDescriptorReader4Script.class);
@@ -78,23 +83,24 @@ public class Main {
 			urls[i] = uri.toURL();
 			i++;
 		}
-		URLClassLoader cl = new URLClassLoader(urls, null/*ClassLoader.getSystemClassLoader()*/);
-		try {
+		try(URLClassLoader cl = new URLClassLoader(urls, null/*ClassLoader.getSystemClassLoader()*/);){
 		  //TODO Switch current ClassLoader
 			Class<?> clazz = cl.loadClass(v.className);
 			Method m = clazz.getMethod("main", String[].class);
 			m.invoke(null, (Object)v.args.toArray(new String[]{}));
+		} catch(NoClassDefFoundError exc) {
+		  System.err.println("classloader's url : " + Arrays.toString(urls));
+		  throw exc;
 		} catch(Exception exc) {
 			//TODO log the RunInfo to help debug cause of the exception
 			throw exc;
-		} finally {
-			cl.close();
 		}
 	}
 	
 	public static RunInfo compile(URI v) throws Exception {
 	  ServiceLocator locator = newServiceLocator();
-    ScriptInfo si = locator.getService(ScriptService.class).findScriptInfo(v);
+	  ScriptService ss = locator.getService(ScriptService.class);
+    ScriptInfo si = ss.findScriptInfo(v);
     DependencyService ds = locator.getService(DependencyService.class);
     RepositorySystemSession session = ds.newSession();
 
@@ -112,7 +118,7 @@ public class Main {
 //    System.err.println("jar : " + jar);
 
     if (!jar.exists()) {
-      File src = si.artifact.getFile();
+      FileObject src = ss.findFileObject(v);
       CompilerService cs = null;
       for (CompilerService cs0 : locator.getServices(CompilerService.class)) {
         if (cs0.accept(src)) {
@@ -124,7 +130,15 @@ public class Main {
         throw new IllegalStateException("no compilers accept " + src);
       }
       jar.getParentFile().mkdirs();
-      if (!cs.compileToJar(jar, src, classpath, new LinkedList<String>())) {
+
+      DiagnosticCollector<javax.tools.FileObject> diagnostics = new DiagnosticCollector<javax.tools.FileObject>();
+      boolean b = cs.compileToJar(jar, src, classpath, new LinkedList<String>(), diagnostics);
+      for(javax.tools.Diagnostic<? extends javax.tools.FileObject> d : diagnostics.getDiagnostics()){
+          // Print all the information here.
+          System.err.format("%s:%s:%d:%d:%s:%s\n", d.getCode(), d.getKind(), d.getLineNumber(), d.getColumnNumber(), d.getSource(), d.getMessage(null));
+      }
+
+      if (!b) {
         throw new Exception("Fail to compile");
       }
     }
@@ -142,11 +156,8 @@ public class Main {
 	}
 	
 	public static String toString(URI v) throws Exception {
-		InputStream is = v.toURL().openStream();
-		try {
+		try(InputStream is = v.toURL().openStream()) {
 			return IOUtil.toString(is);
-		} finally {
-			is.close();
 		}
 	}
 
