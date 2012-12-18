@@ -5,6 +5,10 @@ import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.io.PrintStream;
 
+import javax.script.ScriptEngine;
+import javax.script.ScriptEngineManager;
+import javax.script.ScriptException;
+
 import net_alchim31_runner.Main;
 
 import org.codehaus.plexus.util.IOUtil;
@@ -31,7 +35,7 @@ public class ExamplesITest {
       System.setOut(out);
     }
   }
-  
+
   @Test
   public void run_HelloworldJava_NoArgs() throws Exception {
     Assert.assertEquals("Hello World ! \n", runAndCaptureOut(new File(_basedir, "HelloWorld.java").getPath()));
@@ -40,12 +44,27 @@ public class ExamplesITest {
   @Test
   public void run_HelloworldJava_WithArgs() throws Exception {
     String s = String.valueOf(Math.random());
-    Assert.assertEquals("Hello World ! "+ s +"\n", runAndCaptureOut(new File(_basedir, "HelloWorld.java").getPath(), s));
+    Assert.assertEquals("Hello World ! " + s + "\n", runAndCaptureOut(new File(_basedir, "HelloWorld.java").getPath(), s));
   }
-  
-  
+
   @Test
   public void run_escape_html_with_deps() throws Exception {
     Assert.assertEquals("&quot;bread&quot; &amp; &quot;butter&quot;\n", runAndCaptureOut(new File(_basedir, "escape_html_with_deps.java").getPath(), "\"bread\" & \"butter\""));
+  }
+
+  @Test
+  public void run_HelloworldJavascript_NoArgs() throws Exception {
+    Assert.assertEquals("Hello World ! \n", runAndCaptureOut(new File(_basedir, "HelloWorld3.js").getPath()));
+  }
+
+  @Test
+  public void t() throws Exception {
+    ScriptEngineManager mgr = new ScriptEngineManager();
+    ScriptEngine jsEngine = mgr.getEngineByName("JavaScript");
+    try {
+      jsEngine.eval("java.lang.System.out.println(2*2)");
+    } catch (ScriptException ex) {
+      ex.printStackTrace();
+    }
   }
 }

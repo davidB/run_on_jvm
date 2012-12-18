@@ -40,6 +40,11 @@
 
 	<dependencies>
 		<dependency>
+			<groupId>org.projectlombok</groupId>
+			<artifactId>lombok</artifactId>
+			<version>0.11.6</version>
+		</dependency>
+		<dependency>
 			<groupId>org.sonatype.aether</groupId>
 			<artifactId>aether-api</artifactId>
 			<version>${aetherVersion}</version>
@@ -88,6 +93,13 @@
 			<groupId>org.codehaus.plexus</groupId>
 			<artifactId>plexus-classworlds</artifactId>
 			<version>2.4.2</version>
+		</dependency>
+		<!-- Custom Language -->
+		<dependency>
+			<groupId>org.mozilla</groupId>
+			<artifactId>rhino</artifactId>
+			<version>1.7R4</version>
+			<scope>provided</scope>
 		</dependency>
 		<!-- Test -->
 		<dependency>
