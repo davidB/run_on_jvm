@@ -265,24 +265,24 @@ options.add("170");
    * prepend the name with an underscore if the file name does not begin with a JavaLetter.
    */
 
-  private String getClassName(String name) {
-    char[] s = new char[name.length() + 1];
-    char c;
-    int j = 0;
-
-    if (!Character.isJavaIdentifierStart(name.charAt(0))) {
-      s[j++] = '_';
-    }
-    for (int i = 0; i < name.length(); i++, j++) {
-      c = name.charAt(i);
-      if (Character.isJavaIdentifierPart(c)) {
-        s[j] = c;
-      } else {
-        s[j] = '_';
-      }
-    }
-    return (new String(s)).trim();
-  }
+//  private String getClassName(String name) {
+//    char[] s = new char[name.length() + 1];
+//    char c;
+//    int j = 0;
+//
+//    if (!Character.isJavaIdentifierStart(name.charAt(0))) {
+//      s[j++] = '_';
+//    }
+//    for (int i = 0; i < name.length(); i++, j++) {
+//      c = name.charAt(i);
+//      if (Character.isJavaIdentifierPart(c)) {
+//        s[j] = c;
+//      } else {
+//        s[j] = '_';
+//      }
+//    }
+//    return (new String(s)).trim();
+//  }
 
   private void addError(String messageId, String arg) {
     String msg;
