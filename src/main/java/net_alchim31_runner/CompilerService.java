@@ -22,8 +22,8 @@ abstract public class CompilerService {
     boolean b = compileToDir(dir, src, classpath, options, diagnostics);
     if (b) {
       FileUtils.jar(dest, dir, new Manifest());
+      FileUtils.deleteDirectory(dir);
     }
-    FileUtils.deleteDirectory(dir);
     return b;
   }
 }

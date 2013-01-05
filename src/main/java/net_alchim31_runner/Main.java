@@ -15,6 +15,7 @@ import java.util.List;
 import javax.tools.DiagnosticCollector;
 import javax.tools.FileObject;
 
+import org.apache.maven.repository.internal.DefaultArtifactDescriptorReader;
 import org.apache.maven.repository.internal.MavenServiceLocator;
 import org.apache.maven.wagon.Wagon;
 import org.codehaus.plexus.util.IOUtil;
@@ -31,6 +32,7 @@ import org.sonatype.maven.wagon.AhcWagon;
 public class Main {
 	public static final List<String> EMPTY_LIST_STRING = Collections.emptyList();
 	
+	//TODO filter and use args like --roj-xxxx
 	public static void main(String[] args) {
 	  URI uri = null;
 		try {
@@ -67,9 +69,11 @@ public class Main {
       public void release(Wagon wagon) {}
     });
     locator.addService(CompilerService.class, CompilerService4Java.class);
+    locator.addService(CompilerService.class, CompilerService4Scala_2_9.class);
     locator.addService(CompilerService.class, CompilerService4Rhino.class);
     locator.setService(DependencyService.class, DependencyService.class);
     locator.setService(ScriptService.class, ScriptService.class);
+    locator.setService(DefaultArtifactDescriptorReader.class, DefaultArtifactDescriptorReader.class);
     locator.setService(ArtifactDescriptorReader.class, ArtifactDescriptorReader4Script.class);
     return locator;
   }
@@ -88,12 +92,9 @@ public class Main {
 			Class<?> clazz = cl.loadClass(v.className);
 			Method m = clazz.getMethod("main", String[].class);
 			m.invoke(null, (Object)v.args.toArray(new String[]{}));
-		} catch(NoClassDefFoundError exc) {
+		} catch(Exception exc) {
 		  System.err.println("classloader's url : " + Arrays.toString(urls));
 		  throw exc;
-		} catch(Exception exc) {
-			//TODO log the RunInfo to help debug cause of the exception
-			throw exc;
 		}
 	}
 	
@@ -135,7 +136,7 @@ public class Main {
       boolean b = cs.compileToJar(jar, src, classpath, new LinkedList<String>(), diagnostics);
       for(javax.tools.Diagnostic<? extends javax.tools.FileObject> d : diagnostics.getDiagnostics()){
           // Print all the information here.
-          System.err.format("%s:%s:%d:%d:%s:%s\n", d.getCode(), d.getKind(), d.getLineNumber(), d.getColumnNumber(), d.getSource(), d.getMessage(null));
+          System.err.format("|%s:%s:%d:%d:%s\n%s\n", d.getKind(), d.getSource().getName(), d.getLineNumber(), d.getColumnNumber(), d.getMessage(null), d.getCode());
       }
 
       if (!b) {
@@ -143,16 +144,7 @@ public class Main {
       }
     }
     classpath.add(jar);
-    return new RunInfo(si.properties.get(ScriptInfo.mainClassName).toString(), toURIs(classpath), EMPTY_LIST_STRING, EMPTY_LIST_STRING);
-	}
-	
-	//@pseudo v.map(_.toURI)
-	private static List<URI> toURIs(List<File> v) throws Exception {
-	  List<URI> b = new ArrayList<URI>(v.size());
-	  for(File f : v) {
-	    b.add(f.toURI());
-	  }
-	  return b;
+    return new RunInfo(si.properties.get(ScriptInfo.mainClassName).toString(), FileUtils.toURIs(classpath), EMPTY_LIST_STRING, EMPTY_LIST_STRING);
 	}
 	
 	public static String toString(URI v) throws Exception {

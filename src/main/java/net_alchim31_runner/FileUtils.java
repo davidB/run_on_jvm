@@ -4,6 +4,9 @@ import java.io.File;
 import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
@@ -39,4 +42,21 @@ public class FileUtils extends org.codehaus.plexus.util.FileUtils {
     }
   }
 
+  //@pseudo v.map(_.toURI)
+  public static List<URI> toURIs(List<File> v) throws Exception {
+    List<URI> b = new ArrayList<URI>(v.size());
+    for(File f : v) {
+      b.add(f.toURI());
+    }
+    return b;
+  }
+
+  //@pseudo v.map(_.toString)
+  public static List<String> toStrings(List<File> v) throws Exception {
+    List<String> b = new ArrayList<String>(v.size());
+    for(File f : v) {
+      b.add(f.toString());
+    }
+    return b;
+  }
 }
