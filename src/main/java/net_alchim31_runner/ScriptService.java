@@ -18,10 +18,12 @@ import org.codehaus.plexus.util.IOUtil;
 import org.codehaus.plexus.util.StringUtils;
 import org.sonatype.aether.artifact.Artifact;
 import org.sonatype.aether.graph.Dependency;
-import org.sonatype.aether.repository.RemoteRepository;
 import org.sonatype.aether.spi.locator.Service;
 import org.sonatype.aether.spi.locator.ServiceLocator;
 import org.sonatype.aether.util.artifact.DefaultArtifact;
+import org.sonatype.aether.util.layout.MavenDefaultLayout;
+import org.sonatype.aether.util.layout.PatternLayout;
+import org.sonatype.aether.util.layout.RemoteRepositoryWithLayout;
 
 /**
  * Note Thread-Safe
@@ -43,7 +45,7 @@ public class ScriptService implements Service {
   private ScriptInfo parseData(URI uri, ScriptInfo out) throws Exception {
     Pattern setRegEx = Pattern.compile("set\\s+(\\S+)\\s+(\\S+)");
     Pattern repoM2RegEx = Pattern.compile("repo\\s+(\\S+)\\s+m2:((http|file):\\S+)");
-    Pattern repoRawRegEx = Pattern.compile("repo\\s+(\\S+)\\s+raw:((http|file|dir):\\S+\\$\\{artifactId\\}\\S+)$");
+    Pattern repoRawRegEx = Pattern.compile("repo\\s+(\\S+)\\s+raw:((http|file|dir):\\S*\\$\\{artifactId\\}\\S+)$");
     // Pattern artifactRegEx =
     // Pattern.compile("from\\s+([\\w\\-\\._\\$\\{\\}]+):([\\w\\-\\._\\$\\{\\}]+):([\\w\\-\\._\\$\\{\\}]+)(:([\\w\\-\\._]+))?"
     // );
@@ -63,7 +65,7 @@ public class ScriptService implements Service {
         if ((m = setRegEx.matcher(stmt)) != null && m.matches()) {
           props.put(m.group(1), m.group(2));
         } else if ((m = repoM2RegEx.matcher(stmt)) != null && m.matches()) {
-          out.repositories.add(new RemoteRepository(m.group(1), "default", StringUtils.interpolate(m.group(2), props)));
+          out.repositories.add(new RemoteRepositoryWithLayout(m.group(1), "default", StringUtils.interpolate(m.group(2), props), new MavenDefaultLayout()));
         } else if ((m = repoRawRegEx.matcher(stmt)) != null && m.matches()) {
           String uriPattern = m.group(2);
           if (uriPattern.startsWith("dir:")) {
@@ -71,7 +73,10 @@ public class ScriptService implements Service {
             dir = dir.substring(0, dir.lastIndexOf('/') + 1);
             uriPattern = dir + uriPattern.substring("dir:".length());
           }
-          out.repositories.add(new RemoteRepository(m.group(1), "raw", StringUtils.interpolate(uriPattern, props)));
+          String fulluri = StringUtils.interpolate(uriPattern, props);
+          int posVariable = fulluri.indexOf("${");
+          if (posVariable < 0) posVariable = fulluri.length();
+          out.repositories.add(new RemoteRepositoryWithLayout(m.group(1), "raw", fulluri.substring(0, posVariable), new PatternLayout(fulluri.substring(posVariable))));
         } else if ((m = artifactRegEx.matcher(stmt)) != null && m.matches()) {
           out.dependencies.add(new Dependency(new DefaultArtifact(StringUtils.interpolate(m.group(1), props)), "compile"));
         }

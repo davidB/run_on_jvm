@@ -2,7 +2,9 @@ package net_alchim31_runner;
 
 import java.io.FileNotFoundException;
 import java.util.HashMap;
+import java.util.List;
 
+import org.apache.maven.repository.internal.DefaultArtifactDescriptorReader;
 import org.sonatype.aether.RepositoryEvent.EventType;
 import org.sonatype.aether.RepositoryListener;
 import org.sonatype.aether.RepositorySystemSession;
@@ -10,6 +12,7 @@ import org.sonatype.aether.artifact.Artifact;
 import org.sonatype.aether.impl.ArtifactDescriptorReader;
 import org.sonatype.aether.impl.ArtifactResolver;
 import org.sonatype.aether.impl.VersionResolver;
+import org.sonatype.aether.repository.RemoteRepository;
 import org.sonatype.aether.resolution.ArtifactDescriptorException;
 import org.sonatype.aether.resolution.ArtifactDescriptorRequest;
 import org.sonatype.aether.resolution.ArtifactDescriptorResult;
@@ -30,6 +33,7 @@ public class ArtifactDescriptorReader4Script implements ArtifactDescriptorReader
   private ScriptService _scriptService;
   private VersionResolver  _versionResolver;
   private ArtifactResolver _artifactResolver;
+  private ArtifactDescriptorReader _defaultArtifactDescriptorReader;
 
   @Override
   public void initService(ServiceLocator locator) {
@@ -39,12 +43,40 @@ public class ArtifactDescriptorReader4Script implements ArtifactDescriptorReader
     _versionResolver = locator.getService(VersionResolver.class);
     _artifactResolver = locator.getService(ArtifactResolver.class);
     // _artifactDescriptorReaderNext =
-    // locator.getService(DefaultArtifactDescriptorReader.class);
+    _defaultArtifactDescriptorReader = locator.getService(DefaultArtifactDescriptorReader.class);
   }
 
+  
   @Override
   //TODO delegate non script artifact to Maven (DefaultArtifactDescriptorReader)
   public ArtifactDescriptorResult readArtifactDescriptor(RepositorySystemSession session, ArtifactDescriptorRequest request) throws ArtifactDescriptorException {
+    ArtifactDescriptorResult result = null;
+    HashMap<String, List<RemoteRepository>> reposc = groupByContentType(request.getRepositories());
+    if (reposc.containsKey("default")) {
+      result = _defaultArtifactDescriptorReader.readArtifactDescriptor(
+          session,
+          new ArtifactDescriptorRequest(request.getArtifact(), reposc.get("default"), request.getRequestContext())
+      );
+    }
+    if ((result == null || result.getArtifact() == null) && reposc.containsKey("raw")) {
+      result = readArtifactDescriptor4Raw(
+          session,
+          new ArtifactDescriptorRequest(request.getArtifact(), reposc.get("raw"), request.getRequestContext())
+      );
+    }
+    if (result == null) {
+      result = new ArtifactDescriptorResult(request);
+    }
+    return result;
+  }
+  
+  private HashMap<String, List<RemoteRepository>> groupByContentType(List<RemoteRepository> repos) {
+    HashMap<String, List<RemoteRepository>> b = new HashMap<>();
+    
+    return b;
+  }
+  
+  private ArtifactDescriptorResult readArtifactDescriptor4Raw(RepositorySystemSession session, ArtifactDescriptorRequest request) throws ArtifactDescriptorException {
     ArtifactDescriptorResult result = new ArtifactDescriptorResult(request);
     try {
       result = checkVersion(session, result);
