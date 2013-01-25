@@ -3,6 +3,7 @@ package net_alchim31_runner;
 import java.io.File;
 import java.util.List;
 
+import javax.tools.Diagnostic;
 import javax.tools.Diagnostic.Kind;
 import javax.tools.DiagnosticListener;
 import javax.tools.FileObject;
@@ -10,9 +11,12 @@ import javax.tools.FileObject;
 import scala.collection.immutable.Nil;
 import scala.tools.nsc.Global;
 import scala.tools.nsc.Settings;
+import scala.tools.nsc.io.VirtualFile;
 import scala.tools.nsc.reporters.AbstractReporter;
 import scala.tools.nsc.reporters.Reporter;
+import scala.tools.nsc.util.BatchSourceFile;
 import scala.tools.nsc.util.Position;
+import scala.tools.nsc.util.SourceFile;
 
 /**
  * Not ThreadSafe
@@ -59,7 +63,12 @@ public class CompilerService4Scala_2_9 extends CompilerService {
         Kind k = Kind.NOTE;
         if (ERROR().equals(severity)) k = Kind.ERROR;
         else if (WARNING().equals(severity)) k = Kind.WARNING;
-        diagnostics.report(new SimpleDiagnostic<FileObject>(k, src, pos.line(), pos.column(), pos.lineContent(), msg));
+        if (pos.isDefined()) {
+          diagnostics.report(new SimpleDiagnostic<FileObject>(k, src, pos.line(), pos.column(), pos.lineContent(), msg));
+        } else {
+          diagnostics.report(new SimpleDiagnostic<FileObject>(k, src, Diagnostic.NOPOS, Diagnostic.NOPOS, null, msg));
+        }
+
         //super.display(pos, msg, severity);
       }
 
@@ -81,7 +90,9 @@ public class CompilerService4Scala_2_9 extends CompilerService {
       return false;
     }
     Global.Run run = compiler.new Run();
-    run.compile(Nil.$colon$colon(src.getName()));
+    //run.compile(Nil.$colon$colon(src.getName()));
+    SourceFile sf = new BatchSourceFile(new VirtualFile(src.toUri().toString()), src.getCharContent(true).toString().toCharArray());
+    run.compileSources(Nil.$colon$colon(sf));
     // scala.tools.nsc.Main.process(new String[]{"-cp", StringUtils.join(FileUtils.toStrings(classpath).iterator(),
     // File.pathSeparator), "-d", dest.getAbsolutePath(), src.getName()});
     // boolean success = !scala.tools.nsc.Main.reporter().hasErrors();
