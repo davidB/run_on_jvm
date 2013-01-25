@@ -59,4 +59,8 @@ public class FileUtils extends org.codehaus.plexus.util.FileUtils {
     }
     return b;
   }
+  
+  public static String basename2( String filename ) {
+      return basename( filename, "." + extension( filename ) );
+  }
 }

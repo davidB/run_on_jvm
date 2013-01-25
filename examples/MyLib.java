@@ -1,7 +1,7 @@
 package lib;
 
-class MyLib {
-  public static twice(int i) {
+public class MyLib {
+  public static int twice(int i) {
     return i* 2;
   }
 }

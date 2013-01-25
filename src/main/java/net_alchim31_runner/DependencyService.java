@@ -40,6 +40,7 @@ import org.sonatype.aether.util.repository.DefaultProxySelector;
 public class DependencyService implements Service {
 
   private RepositorySystem _system;
+  private WorkspaceReader4Script _workspaceReader4Script;
 
   public DependencyService() {
   }
@@ -47,6 +48,7 @@ public class DependencyService implements Service {
   @Override
   public void initService(ServiceLocator locator) {
     _system = locator.getService(RepositorySystem.class);
+    _workspaceReader4Script = locator.getService(WorkspaceReader4Script.class);
   }
 
   // see http://wiki.eclipse.org/Aether/Creating_a_Repository_System_Session
@@ -106,6 +108,7 @@ public class DependencyService implements Service {
 
     // TODO set local repo dir to maven local repo dir
     LocalRepository localRepo = new LocalRepository("target/local-repo");
+    session.setWorkspaceReader(_workspaceReader4Script);
     session.setLocalRepositoryManager(_system.newLocalRepositoryManager(localRepo));
     // session.setTransferListener( new ConsoleTransferListener() );
     // session.setRepositoryListener( new ConsoleRepositoryListener() );

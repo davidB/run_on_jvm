@@ -1,5 +1,4 @@
-//#repo rel raw:dir:${artifactId}.${extension}
-//#from x:MyLib:java.jar:0.0.0
+//#from dir:MyLib.java
 import lib.MyLib;
 
 public class main_with_local_deps {

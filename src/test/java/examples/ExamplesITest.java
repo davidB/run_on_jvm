@@ -47,7 +47,7 @@ public class ExamplesITest {
     Assert.assertEquals("Hello World ! \n", runAndCaptureOut("https://gist.github.com/raw/4183893/69eb99e07c936c9b5315cb3c23bff9eee20d7c5a/HelloWorld.java"));
   }
 
-  @Test(expected=Exception.class)
+  @Test(expected=IllegalStateException.class)
   public void run_InvalidUrl_500_from_gist() throws Exception {
     runAndCaptureOut("https://gist.github.com/raw/4183893/69eb99e07c936c9b5315cb3c23bff9eee20d7c5a33/HelloWorld.java");
   }
@@ -78,6 +78,19 @@ public class ExamplesITest {
     Assert.assertEquals("Hello World ! " + s + "\n", runAndCaptureOut(new File(_basedir, "HelloWorld2.scala").getPath(), s));
   }
   
+  @Test
+  public void run_HelloworldScala_WithArgs_from_gist() throws Exception {
+    String s = String.valueOf(Math.random());
+    Assert.assertEquals("Hello World ! " + s + "\n", runAndCaptureOut("https://gist.github.com/raw/4183893/307b2453782e2cbadb2ff11b09cd12b7d598f7d2/HelloWorld2.scala", s));
+  }
+  
+
+  public void run_HelloworldScala_invalid() throws Exception {
+    String s = String.valueOf(Math.random());
+    Assert.assertEquals("Hello World ! " + s + "\n", runAndCaptureOut(new File(_basedir, "HelloWorld2_invalid.scala").getPath(), s));
+  }
+  
+  //Test time need to evaluate javascript (lot of shorter than compile (Rhino) + make jar + run)
   @Test
   public void t() throws Exception {
     ScriptEngineManager mgr = new ScriptEngineManager();

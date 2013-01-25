@@ -70,11 +70,11 @@
 			<artifactId>aether-impl</artifactId>
 			<version>${aetherVersion}</version>
 		</dependency>
-		<!-- dependency>
+		<dependency>
 			<groupId>org.sonatype.aether</groupId>
 			<artifactId>aether-connector-file</artifactId>
 			<version>${aetherVersion}</version>
-		</dependency-->
+		</dependency>
 		<dependency>
 			<groupId>org.sonatype.aether</groupId>
 			<artifactId>aether-connector-wagon</artifactId>

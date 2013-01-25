@@ -9,17 +9,12 @@ import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
-
-import javax.tools.DiagnosticCollector;
-import javax.tools.FileObject;
 
 import org.apache.maven.repository.internal.DefaultArtifactDescriptorReader;
 import org.apache.maven.repository.internal.MavenServiceLocator;
 import org.apache.maven.wagon.Wagon;
 import org.codehaus.plexus.util.IOUtil;
-import org.sonatype.aether.RepositorySystemSession;
 import org.sonatype.aether.connector.file.FileRepositoryConnectorFactory;
 import org.sonatype.aether.connector.wagon.WagonProvider;
 import org.sonatype.aether.connector.wagon.WagonRepositoryConnectorFactory;
@@ -33,7 +28,7 @@ public class Main {
 	public static final List<String> EMPTY_LIST_STRING = Collections.emptyList();
 	
 	//TODO filter and use args like --roj-xxxx
-	public static void main(String[] args) {
+	public static void main(String[] args) throws Exception {
 	  URI uri = null;
 		try {
 		  uri = new URI(args[0]);
@@ -44,6 +39,7 @@ public class Main {
 		} catch(Exception exc) {
 		  System.err.println("uri : '" + uri + "'");
 			exc.printStackTrace();
+			throw new IllegalStateException("can't run : " + uri, exc);
 		}
 	}
 	
@@ -74,7 +70,9 @@ public class Main {
     locator.setService(DependencyService.class, DependencyService.class);
     locator.setService(ScriptService.class, ScriptService.class);
     locator.setService(DefaultArtifactDescriptorReader.class, DefaultArtifactDescriptorReader.class);
+    //locator.setService(ArtifactDescriptorReader.class, DefaultArtifactDescriptorReader.class);
     locator.setService(ArtifactDescriptorReader.class, ArtifactDescriptorReader4Script.class);
+    locator.setService(WorkspaceReader4Script.class, WorkspaceReader4Script.class);
     return locator;
   }
   
@@ -102,49 +100,8 @@ public class Main {
 	  ServiceLocator locator = newServiceLocator();
 	  ScriptService ss = locator.getService(ScriptService.class);
     ScriptInfo si = ss.findScriptInfo(v);
-    DependencyService ds = locator.getService(DependencyService.class);
-    RepositorySystemSession session = ds.newSession();
-
-    //    File jar = new File(src.getAbsolutePath() + ".jar");
-    List<File> classpath = new LinkedList<File>();
-    if (si.dependencies.size() > 0) {
-      //ArtifactDescriptorReader adr = locator.getService(ArtifactDescriptorReader.class);
-      //ArtifactDescriptorResult ad = adr.readArtifactDescriptor(session, new ArtifactDescriptorRequest(artifact, null, null));
-      DependencyService.ResolveResult r = ds.resolve(session, si.dependencies, si.managedDependencies, si.repositories);
-      classpath = r.resolvedFiles;
-    }
-    File jar = new File(session.getLocalRepository().getBasedir(), session.getLocalRepositoryManager().getPathForLocalArtifact(si.artifact) + ".jar");
-//    System.err.println("dep : " + StringUtils.join(si.dependencies.iterator(), ":"));
-//    System.err.println("cp  : " + StringUtils.join(classpath.iterator(), ":"));
-//    System.err.println("jar : " + jar);
-
-    if (!jar.exists()) {
-      FileObject src = ss.findFileObject(v);
-      CompilerService cs = null;
-      for (CompilerService cs0 : locator.getServices(CompilerService.class)) {
-        if (cs0.accept(src)) {
-          cs = cs0;
-          break;
-        }
-      }
-      if (cs == null) {
-        throw new IllegalStateException("no compilers accept " + src);
-      }
-      jar.getParentFile().mkdirs();
-
-      DiagnosticCollector<javax.tools.FileObject> diagnostics = new DiagnosticCollector<javax.tools.FileObject>();
-      boolean b = cs.compileToJar(jar, src, classpath, new LinkedList<String>(), diagnostics);
-      for(javax.tools.Diagnostic<? extends javax.tools.FileObject> d : diagnostics.getDiagnostics()){
-          // Print all the information here.
-          System.err.format("|%s:%s:%d:%d:%s\n%s\n", d.getKind(), d.getSource().getName(), d.getLineNumber(), d.getColumnNumber(), d.getMessage(null), d.getCode());
-      }
-
-      if (!b) {
-        throw new Exception("Fail to compile");
-      }
-    }
-    classpath.add(jar);
-    return new RunInfo(si.properties.get(ScriptInfo.mainClassName).toString(), FileUtils.toURIs(classpath), EMPTY_LIST_STRING, EMPTY_LIST_STRING);
+    List<File> classpath = ss.findClasspath(v);
+    return new RunInfo(si.mainClassName, FileUtils.toURIs(classpath), EMPTY_LIST_STRING, EMPTY_LIST_STRING);
 	}
 	
 	public static String toString(URI v) throws Exception {
