@@ -45,31 +45,33 @@ Every files under examples directory should works !
 
 ### TODO
 
+* Download jar needed by compilers (scala-compiler-2.x, rhinojs, ...)
 * Cache classpath result and reuse it for next run (+ option to force recomputation)
 * Support Windows
 * Add logs
 * Add options (to debug, to logs)
 * Support maven' settings.xml (proxy, local repo location)
 * Add-ons for IDE, Text Editor 
+* Reduce size of onejar (3.8M)
 
 ## Install
 
 1. Install jdk
-2. Download ....
-3. Unarchive
-4. Update PATH
-5. (optional) register as env
+2. Download : `wget -O run_on_jvm.jar https://oss.sonatype.org/content/repositories/snapshots/net/alchim31/runner/run_on_jvm/0.2.0-SNAPSHOT/run_on_jvm-0.2.0-20130125.195111-1-onejar.jar`
+
+3. Optional create a script `roj` in the PATH with `java -jar run_on_jvm.jar $*`
+5. Optional register as env (no tested)
 TDB
 
 ## Usage
 
 ### run locale script
 
-    java -jar run_on_jvm-x.y.z-onejar.jar Toto.java
+    java -jar run_on_jvm.jar Toto.java
 
 ### run remote script
 
-  java -jar run_on_jvm-x.y.z-onejar.jar Toto.java
+    java -jar run_on_jvm.jar https://gist.github.com/raw/4183893/69eb99e07c936c9b5315cb3c23bff9eee20d7c5a/HelloWorld.java
 
 ### conventions
 
@@ -83,22 +85,28 @@ TDB
 
 The configuration is a list of definitions, every definitions starts with "//#".
 
-* Dependencies available in a maven's repository
+* Dependency : on a maven's artifact
 
       //#repo central m2:http://repo1.maven.org/maven2/
       //#from org.apache.commons:commons-lang3:3.1
 
   see [examples/escape_html_with_deps.java]()
   no repositories define by default    
-* Dependency as other local script
+* Dependency : other local script
 
       //#from file:/${user.home}/myscripts/MakeCoffee.java
       import mytools.MakeCoffee;
 
-* Depedency as other remote script
+* Dependency : other remote script
 
-     //#from https://gist.github.com/raw/4183893/2c2fde5efc78cec941eacb3464fe642d621b0e7d/MyLib.java
-     import lib.MyLib;
+      //#from https://gist.github.com/raw/4183893/2c2fde5efc78cec941eacb3464fe642d621b0e7d/MyLib.java
+      import lib.MyLib;
+
+* mainClassName : redefinition
+
+      //#mainClassName HelloWorld2
+      object HelloWorld2 {
+
 
 ### Overhead info
 
