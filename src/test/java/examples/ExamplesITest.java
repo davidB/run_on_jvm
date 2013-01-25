@@ -1,7 +1,6 @@
 package examples;
 
 import java.io.File;
-import java.io.IOException;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.io.PrintStream;
@@ -73,9 +72,15 @@ public class ExamplesITest {
   }
   
   @Test
-  public void run_HelloworldScala_WithArgs() throws Exception {
+  public void run_HelloworldScala29_WithArgs() throws Exception {
     String s = String.valueOf(Math.random());
-    Assert.assertEquals("Hello World ! " + s + "\n", runAndCaptureOut(new File(_basedir, "HelloWorld2.scala").getPath(), s));
+    Assert.assertEquals("2.9.2 Hello World ! " + s + "\n", runAndCaptureOut(new File(_basedir, "HelloWorld2_9.scala").getPath(), s));
+  }
+  
+  @Test
+  public void run_HelloworldScala210_WithArgs() throws Exception {
+    String s = String.valueOf(Math.random());
+    Assert.assertEquals("2.10.0 Hello World ! " + s + "\n", runAndCaptureOut(new File(_basedir, "HelloWorld2_10.scala").getPath(), s));
   }
   
   @Test
