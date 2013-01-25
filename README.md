@@ -1,17 +1,28 @@
 # Overview
 
-run4jl run a script written in java or scala (other jvm lang should be possible, contributions are welcome).
+run_on_jvm run a script written in java, javascript or scala (other jvm lang should be possible, contributions are welcome).
 
 Some possible usages :
 
-* share runnable sample code via gist, email with all the dependencies info
-* create build script (I will use it for [plob](https://github.com/davidB/plob) )
-* provide single source file tool
-* provide single source file lib, plugin
+* run shared sample code via gist, email with all the dependencies info (cf syntax bellow)
+* run build script (I will use it for [plob](https://github.com/davidB/plob) )
+* run single source file tool, lib, plugin
+* use the jvm like python, ruby,... for shell scripting
 
 ## Alternatives
 
 "If you know some, tell me".
+
+### For Scala only:
+
+* [scalascriptengine](http://code.google.com/p/scalascriptengine/)
+* [Scala for scripting](http://fr.slideshare.net/day/15-5e-scripting-drig) from Michael Dürig 2010-04-30
+* [Twitter's util-eval](https://github.com/twitter/util), usage example in [Why Config?](http://robey.lag.net/2012/03/26/why-config.html) 2012-03-26
+* stackoverflow :
+  * [eval in scala](http://stackoverflow.com/questions/1183645/eval-in-scala)
+  * [How can I get automatic dependency resolution in my scala scripts?](http://stackoverflow.com/questions/7600189/how-can-i-get-automatic-dependency-resolution-in-my-scala-scripts)
+* [System Scripting with Scala](http://timperrett.com/2011/08/01/system-scripting-with-scala/) from Timothy Perrett  2011-08-01
+* SBT as script runner with dependencies résolution [Scripts, REPL,and Dependencies](http://www.scala-sbt.org/release/docs/Detailed-Topics/Scripts)
 
 ### Inspirations :
 
@@ -24,17 +35,22 @@ Some possible usages :
 
 ### DONE
 
-Nothing, I practice RDD (README Driven Development ;-) )
-
-### TBD
-
 * Compile and Run script *.java
 * Compile and Run script *.scala
 * Cache compilation result and reuse it for next run
 * Download dependencies (direct + transitive) into local cache ($HOME/.m2/repository) from maven's repositories
-* Build classpath from local caches
+* Build classpath from local cache
+
+Every files under examples directory should works !
+
+### TODO
+
 * Cache classpath result and reuse it for next run (+ option to force recomputation)
 * Support Windows
+* Add logs
+* Add options (to debug, to logs)
+* Support maven' settings.xml (proxy, local repo location)
+* Add-ons for IDE, Text Editor 
 
 ## Install
 
@@ -49,11 +65,42 @@ TDB
 
 ### run locale script
 
-
-
     java -jar run_on_jvm-x.y.z-onejar.jar Toto.java
 
-#### Overhead info
+### run remote script
+
+  java -jar run_on_jvm-x.y.z-onejar.jar Toto.java
+
+### conventions
+
+* local cache = $HOME/.m2/repository
+* mainClassName (in default package), can be redefined = filename - extension 
+* artifactId = md5 (base64) of the path
+* groupId = "script.local" for local file and "script.<hostname>" for remote file
+* version = 0.0.0-SNAPSHOT
+
+### configuration (optional)
+
+The configuration is a list of definitions, every definitions starts with "//#".
+
+* Dependencies available in a maven's repository
+
+      //#repo central m2:http://repo1.maven.org/maven2/
+      //#from org.apache.commons:commons-lang3:3.1
+
+  see [examples/escape_html_with_deps.java]()
+  no repositories define by default    
+* Dependency as other local script
+
+      //#from file:/${user.home}/myscripts/MakeCoffee.java
+      import mytools.MakeCoffee;
+
+* Depedency as other remote script
+
+     //#from https://gist.github.com/raw/4183893/2c2fde5efc78cec941eacb3464fe642d621b0e7d/MyLib.java
+     import lib.MyLib;
+
+### Overhead info
 
 For an already compiled classes with no dependencies :
 
@@ -69,15 +116,6 @@ For an already compiled classes with no dependencies :
     Hello World !
     target/appassembler/bin/roj examples/HelloWorld.java  0,24s user 0,03s system 132% cpu 0,206 total
 
-### run remote script
-
-TDB
-
-### conventions
-
-TBD
-* filename - extension == mainClassname (default package)
-* version of local files == md5 encoding base64 of the file
 
 # Contributing
 

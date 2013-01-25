@@ -68,7 +68,7 @@ public class ScriptService implements Service {
         if ((m = setRegEx.matcher(stmt)) != null && m.matches()) {
           props.put(m.group(1), m.group(2));
         } else if ((m = repoM2RegEx.matcher(stmt)) != null && m.matches()) {
-          out.repositories.add(new RemoteRepository(m.group(1), "default", StringUtils.interpolate(m.group(2), props)));
+          out.repositories.add(new RemoteRepository(m.group(1), "default", interpolate(m.group(2), props)));
         } else if ((m = artifactRegEx.matcher(stmt)) != null && m.matches()) {
           String from = m.group(1);
           if (from.startsWith("dir:")) {
@@ -76,7 +76,7 @@ public class ScriptService implements Service {
             dir = dir.substring(0, dir.lastIndexOf('/') + 1);
             from = dir + from.substring("dir:".length());
           }
-          from = StringUtils.interpolate(from, props);
+          from = interpolate(from, props);
           if (from.startsWith("http:") || from.startsWith("file:")) {
             out.dependencies.add(new Dependency(newArtifact(new URI(from)), "compile"));
           } else {
@@ -90,6 +90,16 @@ public class ScriptService implements Service {
     return out;
   }
 
+  private String interpolate(String txt, Map<String, Object> props) {
+    String b = txt;
+    if (props.size() > 0 && b.indexOf("${") > 0) {
+      b = StringUtils.interpolate(b, props);
+    }
+    if (b.indexOf("${") > 0) { 
+      b = StringUtils.interpolate(b, System.getProperties());
+    }
+    return b;
+  }
   // TODO define (plugable ?) strategy for remote uri
   // eg :
   // https://gist.github.com/raw/4183893/962aa266b58511f277ca5a163aca572206bc13ca/HelloWorld.java

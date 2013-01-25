@@ -107,7 +107,7 @@ public class DependencyService implements Service {
     // session.setConfigProps( System.getProperties() );
 
     // TODO set local repo dir to maven local repo dir
-    LocalRepository localRepo = new LocalRepository("target/local-repo");
+    LocalRepository localRepo = new LocalRepository(System.getProperty("user.home") + "/.m2/repository");//"target/local-repo");
     session.setWorkspaceReader(_workspaceReader4Script);
     session.setLocalRepositoryManager(_system.newLocalRepositoryManager(localRepo));
     // session.setTransferListener( new ConsoleTransferListener() );
