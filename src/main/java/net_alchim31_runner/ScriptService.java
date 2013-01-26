@@ -158,7 +158,7 @@ public class ScriptService implements Service {
   public List<File> newClasspath(ScriptInfo si) throws Exception {
     URI uri = si.src.toUri();
     
-    System.err.println("Resolving dependencies...");
+    Main.logger.info("Resolving dependencies of {}", si.src);
     DependencyService ds = _locator.getService(DependencyService.class);
     RepositorySystemSession session = ds.newSession();
 
@@ -184,11 +184,17 @@ public class ScriptService implements Service {
       boolean b = cs.compileToJar(jar, src, classpath, new LinkedList<String>(), diagnostics);
       for(javax.tools.Diagnostic<? extends javax.tools.FileObject> d : diagnostics.getDiagnostics()){
           // Print all the information here.
-          System.err.format("|%s:%s:%d:%d:%s\n%s\n", d.getKind(), d.getSource().getName(), d.getLineNumber(), d.getColumnNumber(), d.getMessage(null), d.getCode());
+          String msg = String.format("|%s:%d:%d:%s\n%s\n", d.getSource().getName(), d.getLineNumber(), d.getColumnNumber(), d.getMessage(null), d.getCode());
+          switch(d.getKind()) {
+            case ERROR: Main.logger.error(msg); break;
+            case WARNING: Main.logger.warn(msg); break;
+            case MANDATORY_WARNING: Main.logger.warn(msg); break;
+            default: Main.logger.info(msg);
+          }
       }
 
       if (!b) {
-        throw new Exception("Fail to compile");
+        throw new Exception("Fail to compile : " + si.src);
       }
     }
     classpath.add(0, jar);

@@ -8,7 +8,7 @@ import javax.tools.Diagnostic.Kind;
 import javax.tools.DiagnosticListener;
 import javax.tools.FileObject;
 
-//#set scalaVersion 2.9.2
+//#set scalaVersion 2.10.0
 //#repo central m2:http://repo1.maven.org/maven2/
 //#from org.scala-lang:scala-compiler:${scalaVersion}
 import scala.collection.immutable.Nil;
@@ -30,7 +30,8 @@ import scala.tools.nsc.util.SourceFile;
  * @author dwayne
  */
 // TODO remove useless args from the "help"
-public class CompilerService4Scala_2_9 implements CompilerService {
+// TODO use the scalacompiler of the same version from scala-library
+public class CompilerService4Scala_2_10 implements CompilerService {
 
   // TODO support options (parse into settings)
   @Override
@@ -48,7 +49,7 @@ public class CompilerService4Scala_2_9 implements CompilerService {
       cp = (cp == null) ? Nil.$colon$colon(path) : cp.$colon$colon(path);
     }
     if (cp != null) {
-      settings.classpath().tryToSet(cp);
+      // settings.classpath().tryToSet(cp);
     }
     // val ss = new Settings(scalacError)
     // reporter = new ConsoleReporter(ss)

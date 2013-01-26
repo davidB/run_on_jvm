@@ -34,7 +34,7 @@ public class WorkspaceReader4Script implements WorkspaceReader, Service {
         return findJar(new URI(uri));
       }
     } catch(Exception exc) {
-      exc.printStackTrace();
+      Main.logger.warn("Failed to find " + artifact,exc);
     }
     return null;
   }

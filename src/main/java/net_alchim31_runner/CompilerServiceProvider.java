@@ -102,7 +102,7 @@ public class CompilerServiceProvider implements Service{
 //  }
   
   boolean compileToJar(File dest, FileObject src, List<File> classpath, List<String> options, DiagnosticListener<javax.tools.FileObject> diagnostics) throws Exception {
-    System.err.println("Prepare compiler...");
+    Main.logger.info("Prepare compiler... for {}", src);
     CompilerContext cc = find(src, classpath);
     if (cc == null) {
       throw new IllegalStateException("no compilers accept " + src);
@@ -117,32 +117,22 @@ public class CompilerServiceProvider implements Service{
       } else {
         dir.mkdirs();
       }
-      System.err.println("Compiling...");
-      System.err.println("try to compile " + src.toUri());
-      System.err.println("classpath: \n\t" + StringUtils.join(classpath.iterator(), "\n\t"));
-      ClassLoader cl0 = Thread.currentThread().getContextClassLoader();
-      if (cl0 instanceof URLClassLoader) {
-        URLClassLoader cl = (URLClassLoader) Thread.currentThread().getContextClassLoader();
-        System.err.println("compile classpath: \n\t" + StringUtils.join(cl.getURLs(), "\n\t"));
-      }
-      
-      
+      Main.logger.info("Compiling ... {}", src);
       boolean b = cc.cs.compileToDir(dir, src, classpath, options, diagnostics);
       if (b) {
-        System.err.println("Making jar...");
+        Main.logger.info("Making jar ... {}", src);
         FileUtils.jar(dest, dir, new Manifest());
         FileUtils.deleteDirectory(dir);
       }
       return b;
-    } catch(Error | Exception exc) {
-      System.err.println("try to compile " + src.toUri());
-      System.err.println("classpath: \n\t" + StringUtils.join(classpath.iterator(), "\n\t"));
+    } catch(Throwable exc) {
+      Main.logger.warn("Failed to compile : {}", src);
+      Main.logger.warn("classpath: \n\t" + StringUtils.join(classpath.iterator(), "\n\t"));
       ClassLoader cl0 = Thread.currentThread().getContextClassLoader();
       if (cl0 instanceof URLClassLoader) {
         URLClassLoader cl = (URLClassLoader) Thread.currentThread().getContextClassLoader();
-        System.err.println("compile classpath: \n\t" + StringUtils.join(cl.getURLs(), "\n\t"));
-      }
-      throw exc;
+        Main.logger.warn("compiler classpath: \n\t" + StringUtils.join(cl.getURLs(), "\n\t"));
+      }      throw exc;
     } finally {
       if (currentCl != compilerCl) {
         Thread.currentThread().setContextClassLoader(currentCl);
@@ -153,7 +143,6 @@ public class CompilerServiceProvider implements Service{
   @Override
   public void initService(ServiceLocator locator) {
     _ss = locator.getService(ScriptService.class);
-    
   }
   
   static class  CompilerContext{

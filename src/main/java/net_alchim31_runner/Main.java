@@ -15,6 +15,8 @@ import org.apache.maven.repository.internal.DefaultArtifactDescriptorReader;
 import org.apache.maven.repository.internal.MavenServiceLocator;
 import org.apache.maven.wagon.Wagon;
 import org.codehaus.plexus.util.IOUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.sonatype.aether.connector.file.FileRepositoryConnectorFactory;
 import org.sonatype.aether.connector.wagon.WagonProvider;
 import org.sonatype.aether.connector.wagon.WagonRepositoryConnectorFactory;
@@ -26,6 +28,7 @@ import org.sonatype.maven.wagon.AhcWagon;
 //TODO remove useless service, cache when no longer needed (after compile) 
 public class Main {
 	public static final List<String> EMPTY_LIST_STRING = Collections.emptyList();
+	public static final Logger logger = LoggerFactory.getLogger("roj");
 	
 	//TODO filter and use args like --roj-xxxx
 	public static void main(String[] args) throws Exception {
@@ -37,8 +40,7 @@ public class Main {
 		  }
 			run(compile(uri).addArgs(args, 1));
 		} catch(Exception exc) {
-		  System.err.println("uri : '" + uri + "'");
-			exc.printStackTrace();
+		  logger.error("uri : '" + uri + "'", exc);
 			throw new IllegalStateException("can't run : " + uri, exc);
 		}
 	}
@@ -84,7 +86,8 @@ public class Main {
 			Method m = clazz.getMethod("main", String[].class);
 			m.invoke(null, (Object)v.args.toArray(new String[]{}));
 		} catch(Exception exc) {
-		  System.err.println("classloader's url : " + Arrays.toString(urls));
+		  Main.logger.error("Failed to run : {}", v.className);
+		  Main.logger.error("classloader's url : {}", Arrays.toString(urls));
 		  throw exc;
 		}
 	}

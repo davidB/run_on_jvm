@@ -23,6 +23,11 @@ class StringFileObject extends SimpleJavaFileObject {
   }
 
   @Override
+  public String toString() {
+    return uri.toString();
+  }
+  
+  @Override
   public URI toUri() {
     return uri;
   }

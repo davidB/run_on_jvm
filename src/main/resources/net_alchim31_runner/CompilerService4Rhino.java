@@ -211,8 +211,7 @@ public class CompilerService4Rhino implements CompilerService {
    * Print a usage message.
    */
   private static void badUsage(String s) {
-    System.err.println(ToolErrorReporter.getMessage(
-        "msg.jsc.bad.usage", Main.class.getName(), s));
+    net_alchim31_runner.Main.logger.error(ToolErrorReporter.getMessage("msg.jsc.bad.usage", Main.class.getName(), s));
   }
 
   /**
