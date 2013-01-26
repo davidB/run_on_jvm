@@ -43,7 +43,7 @@ public class ExamplesITest {
   
   @Test
   public void run_HelloworldJava_NoArgs_from_gist() throws Exception {
-    Assert.assertEquals("Hello World ! \n", runAndCaptureOut("https://gist.github.com/raw/4183893/69eb99e07c936c9b5315cb3c23bff9eee20d7c5a/HelloWorld.java"));
+    Assert.assertEquals("Hello World ! \n", runAndCaptureOut("--roj-verbose", "https://gist.github.com/raw/4183893/69eb99e07c936c9b5315cb3c23bff9eee20d7c5a/HelloWorld.java"));
   }
 
   @Test(expected=IllegalStateException.class)
@@ -54,12 +54,12 @@ public class ExamplesITest {
   @Test
   public void run_HelloworldJava_WithArgs() throws Exception {
     String s = String.valueOf(Math.random());
-    Assert.assertEquals("Hello World ! " + s + "\n", runAndCaptureOut(new File(_basedir, "HelloWorld.java").getPath(), s));
+    Assert.assertEquals("Hello World ! " + s + "\n", runAndCaptureOut("--roj-verbose", new File(_basedir, "HelloWorld.java").getPath(), s));
   }
 
   @Test
   public void run_escape_html_with_deps() throws Exception {
-    Assert.assertEquals("&quot;bread&quot; &amp; &quot;butter&quot;\n", runAndCaptureOut(new File(_basedir, "escape_html_with_deps.java").getPath(), "\"bread\" & \"butter\""));
+    Assert.assertEquals("&quot;bread&quot; &amp; &quot;butter&quot;\n", runAndCaptureOut("--roj-verbose", new File(_basedir, "escape_html_with_deps.java").getPath(), "\"bread\" & \"butter\""));
   }
   @Test
   public void run_main_with_local_deps() throws Exception {
@@ -68,13 +68,13 @@ public class ExamplesITest {
   
   @Test
   public void run_HelloworldJavascript_NoArgs() throws Exception {
-    Assert.assertEquals("Hello World ! \n", runAndCaptureOut(new File(_basedir, "HelloWorld3.js").getPath()));
+    Assert.assertEquals("Hello World ! \n", runAndCaptureOut("--roj-verbose", new File(_basedir, "HelloWorld3.js").getPath()));
   }
   
   @Test
   public void run_HelloworldScala29_WithArgs() throws Exception {
     String s = String.valueOf(Math.random());
-    Assert.assertEquals("2.9.2 Hello World ! " + s + "\n", runAndCaptureOut(new File(_basedir, "HelloWorld2_9.scala").getPath(), s));
+    Assert.assertEquals("2.9.2 Hello World ! " + s + "\n", runAndCaptureOut("--roj-verbose", new File(_basedir, "HelloWorld2_9.scala").getPath(), s));
   }
   
 //  @Test
@@ -86,13 +86,13 @@ public class ExamplesITest {
   @Test
   public void run_HelloworldScala_WithArgs_from_gist() throws Exception {
     String s = String.valueOf(Math.random());
-    Assert.assertEquals("Hello World ! " + s + "\n", runAndCaptureOut("https://gist.github.com/raw/4183893/307b2453782e2cbadb2ff11b09cd12b7d598f7d2/HelloWorld2.scala", s));
+    Assert.assertEquals("Hello World ! " + s + "\n", runAndCaptureOut("--roj-verbose", "https://gist.github.com/raw/4183893/307b2453782e2cbadb2ff11b09cd12b7d598f7d2/HelloWorld2.scala", s));
   }
   
 
   public void run_HelloworldScala_invalid() throws Exception {
     String s = String.valueOf(Math.random());
-    Assert.assertEquals("Hello World ! " + s + "\n", runAndCaptureOut(new File(_basedir, "HelloWorld2_invalid.scala").getPath(), s));
+    Assert.assertEquals("Hello World ! " + s + "\n", runAndCaptureOut("--roj-verbose", new File(_basedir, "HelloWorld2_invalid.scala").getPath(), s));
   }
   
   //Test time need to evaluate javascript (lot of shorter than compile (Rhino) + make jar + run)
