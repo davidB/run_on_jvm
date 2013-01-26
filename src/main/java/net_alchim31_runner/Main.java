@@ -64,9 +64,7 @@ public class Main {
       @Override
       public void release(Wagon wagon) {}
     });
-    locator.addService(CompilerService.class, CompilerService4Java.class);
-    locator.addService(CompilerService.class, CompilerService4Scala_2_9.class);
-    locator.addService(CompilerService.class, CompilerService4Rhino.class);
+    locator.addService(CompilerServiceProvider.class, CompilerServiceProvider.class);
     locator.setService(DependencyService.class, DependencyService.class);
     locator.setService(ScriptService.class, ScriptService.class);
     locator.setService(DefaultArtifactDescriptorReader.class, DefaultArtifactDescriptorReader.class);
@@ -79,12 +77,7 @@ public class Main {
   
   //TODO fork a new process if JvmArg or fork options
 	public static void run(RunInfo v) throws Exception {
-		URL[] urls = new URL[v.classpath.size()];
-		int i = 0;
-		for(URI uri : v.classpath) {
-			urls[i] = uri.toURL();
-			i++;
-		}
+		URL[] urls = FileUtils.toURLs(v.classpath);
 		try(URLClassLoader cl = new URLClassLoader(urls, null/*ClassLoader.getSystemClassLoader()*/);){
 		  //TODO Switch current ClassLoader
 			Class<?> clazz = cl.loadClass(v.className);
@@ -99,9 +92,9 @@ public class Main {
 	public static RunInfo compile(URI v) throws Exception {
 	  ServiceLocator locator = newServiceLocator();
 	  ScriptService ss = locator.getService(ScriptService.class);
-    ScriptInfo si = ss.findScriptInfo(v);
+    ScriptInfo si = ss.findScriptInfo(v, null);
     List<File> classpath = ss.newClasspath(si);
-    return new RunInfo(si.mainClassName, FileUtils.toURIs(classpath), EMPTY_LIST_STRING, EMPTY_LIST_STRING);
+    return new RunInfo(si.mainClassName, classpath, EMPTY_LIST_STRING, EMPTY_LIST_STRING);
 	}
 	
 	public static String toString(URI v) throws Exception {
@@ -116,10 +109,10 @@ public class Main {
 class RunInfo {
 	public final String className;
 	public final List<String> args;
-	public final List<URI> classpath;
+	public final List<File> classpath;
 	public final List<String> jvmArgs;
 
-	public RunInfo(String className0, List<URI> classpath0, List<String> args0, List<String> jvmArgs0) {
+	public RunInfo(String className0, List<File> classpath0, List<String> args0, List<String> jvmArgs0) {
 		super();
 		this.classpath = classpath0;
 		this.className = className0;

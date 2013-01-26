@@ -50,6 +50,6 @@ public class WorkspaceReader4Script implements WorkspaceReader, Service {
 
   public File findJar(URI v) throws Exception {
     ScriptService ss = _locator.getService(ScriptService.class);
-    return ss.newClasspath(ss.findScriptInfo(v)).get(0);
+    return ss.newClasspath(ss.findScriptInfo(v, null)).get(0);
   }
 }

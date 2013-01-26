@@ -11,6 +11,8 @@ import javax.tools.Diagnostic.Kind;
 import javax.tools.DiagnosticListener;
 import javax.tools.FileObject;
 
+//#repo central m2:http://repo1.maven.org/maven2/ 
+//#from org.mozilla:rhino:1.7R4
 import org.mozilla.javascript.CompilerEnvirons;
 import org.mozilla.javascript.ErrorReporter;
 import org.mozilla.javascript.EvaluatorException;
@@ -18,17 +20,21 @@ import org.mozilla.javascript.optimizer.ClassCompiler;
 import org.mozilla.javascript.tools.ToolErrorReporter;
 import org.mozilla.javascript.tools.jsc.Main;
 
+//#set rojVersion 0.3.0-SNAPSHOT
+//#repo lib m2:file://${app.home}/lib
+//#from net.alchim31.runner:run_on_jvm:${rojVersion}
+
 /**
  * Not ThreadSafe
  * 
  * @author dwayne
  * @based org.mozilla.javascript.tools.jsc.Main
  */
-//TODO remove useless args from the "help"
-public class CompilerService4Rhino extends CompilerService {
+// TODO remove useless args from the "help"
+public class CompilerService4Rhino implements CompilerService {
 
   @Override
-  boolean compileToDir(File dest, final FileObject src, List<File> classpath, List<String> options, final DiagnosticListener<FileObject> diagnostics) throws Exception {
+  public boolean compileToDir(File dest, final FileObject src, List<File> classpath, List<String> options, final DiagnosticListener<FileObject> diagnostics) throws Exception {
     reporter = new ErrorReporter() {
 
       @Override
@@ -50,11 +56,11 @@ public class CompilerService4Rhino extends CompilerService {
     compilerEnv = new CompilerEnvirons();
     compilerEnv.setErrorReporter(reporter);
     compiler = new ClassCompiler(compilerEnv);
-options.add("-nosource");
-options.add("-opt");
-options.add("9");
-options.add("-version");
-options.add("170");
+    options.add("-nosource");
+    options.add("-opt");
+    options.add("9");
+    options.add("-version");
+    options.add("170");
     if (!processOptions(options)) {
       if (printHelp) {
         diagnostics.report(new SimpleDiagnostic<>(Kind.NOTE, src, ToolErrorReporter.getMessage("msg.jsc.usage", "org.mozilla.javascript.tools.jsc.Main")));
@@ -62,20 +68,14 @@ options.add("170");
       return false;
     }
     processSource(dest, src);
-    return true; //TODO report.hasError 
-  }
-
-  @Override
-  boolean accept(FileObject f) throws Exception {
-    return f.getName().endsWith(".js");
+    return true; // TODO report.hasError
   }
 
   /**
    * Parse arguments.
    * 
    */
-  public boolean processOptions(List<String> args)
-  {
+  public boolean processOptions(List<String> args) {
     compilerEnv.setGenerateDebugInfo(false); // default to no symbols
     for (int i = 0; i < args.size(); i++) {
       String arg = args.get(i);
@@ -90,8 +90,7 @@ options.add("170");
           compilerEnv.setLanguageVersion(version);
           continue;
         }
-        if ((arg.equals("-opt") || arg.equals("-O")) && ++i < args.size())
-        {
+        if ((arg.equals("-opt") || arg.equals("-O")) && ++i < args.size()) {
           int optLevel = Integer.parseInt(args.get(i));
           compilerEnv.setOptimizationLevel(optLevel);
           continue;
@@ -113,7 +112,7 @@ options.add("170");
         continue;
       }
       if (arg.equals("-encoding") && ++i < args.size()) {
-        //characterEncoding = args.get(i);
+        // characterEncoding = args.get(i);
         continue;
       }
       if (arg.equals("-o") && ++i < args.size()) {
@@ -138,7 +137,7 @@ options.add("170");
             break;
           }
         }
-//        targetName = name;
+        // targetName = name;
         continue;
       }
       if (arg.equals("-observe-instruction-count")) {
@@ -163,10 +162,10 @@ options.add("170");
               continue;
             }
           }
-//          addError("msg.package.name", targetPackage);
+          // addError("msg.package.name", targetPackage);
           return false;
         }
-//        targetPackage = pkg;
+        // targetPackage = pkg;
         continue;
       }
       if (arg.equals("-extends") && ++i < args.size()) {
@@ -199,7 +198,7 @@ options.add("170");
         continue;
       }
       if (arg.equals("-d") && ++i < args.size()) {
-        //destinationDir = args.get(i);
+        // destinationDir = args.get(i);
         continue;
       }
       badUsage(arg);
@@ -265,24 +264,24 @@ options.add("170");
    * prepend the name with an underscore if the file name does not begin with a JavaLetter.
    */
 
-//  private String getClassName(String name) {
-//    char[] s = new char[name.length() + 1];
-//    char c;
-//    int j = 0;
-//
-//    if (!Character.isJavaIdentifierStart(name.charAt(0))) {
-//      s[j++] = '_';
-//    }
-//    for (int i = 0; i < name.length(); i++, j++) {
-//      c = name.charAt(i);
-//      if (Character.isJavaIdentifierPart(c)) {
-//        s[j] = c;
-//      } else {
-//        s[j] = '_';
-//      }
-//    }
-//    return (new String(s)).trim();
-//  }
+  // private String getClassName(String name) {
+  // char[] s = new char[name.length() + 1];
+  // char c;
+  // int j = 0;
+  //
+  // if (!Character.isJavaIdentifierStart(name.charAt(0))) {
+  // s[j++] = '_';
+  // }
+  // for (int i = 0; i < name.length(); i++, j++) {
+  // c = name.charAt(i);
+  // if (Character.isJavaIdentifierPart(c)) {
+  // s[j] = c;
+  // } else {
+  // s[j] = '_';
+  // }
+  // }
+  // return (new String(s)).trim();
+  // }
 
   private void addError(String messageId, String arg) {
     String msg;

@@ -5,6 +5,7 @@ import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.net.URI;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.jar.JarEntry;
@@ -49,6 +50,17 @@ public class FileUtils extends org.codehaus.plexus.util.FileUtils {
       b.add(f.toURI());
     }
     return b;
+  }
+  
+  // used to create URLClassloader
+  public static URL[] toURLs(List<File> v) throws Exception {
+    URL[] urls = new URL[v.size()];
+    int i = 0;
+    for(File uri : v) {
+      urls[i] = uri.toURI().toURL();
+      i++;
+    }
+    return urls;
   }
 
   //@pseudo v.map(_.toString)

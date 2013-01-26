@@ -20,6 +20,7 @@ import org.sonatype.aether.spi.locator.ServiceLocator;
 import org.sonatype.aether.util.DefaultRepositorySystemSession;
 import org.sonatype.aether.util.artifact.DefaultArtifactType;
 import org.sonatype.aether.util.artifact.DefaultArtifactTypeRegistry;
+import org.sonatype.aether.util.filter.ScopeDependencyFilter;
 import org.sonatype.aether.util.graph.PreorderNodeListGenerator;
 import org.sonatype.aether.util.graph.manager.ClassicDependencyManager;
 import org.sonatype.aether.util.graph.selector.AndDependencySelector;
@@ -119,7 +120,7 @@ public class DependencyService implements Service {
 
   ResolveResult resolve(RepositorySystemSession session, List<Dependency> dependencies, List<Dependency> managedDependencies, List<RemoteRepository> remoteRepositories) throws Exception {
     CollectRequest collectRequest = new CollectRequest(dependencies, managedDependencies, remoteRepositories);
-    DependencyRequest dependencyRequest = new DependencyRequest(collectRequest, null);
+    DependencyRequest dependencyRequest = new DependencyRequest(collectRequest, new ScopeDependencyFilter("provided"));
     DependencyNode rootNode = _system.resolveDependencies(session, dependencyRequest).getRoot();
     PreorderNodeListGenerator nlg = new PreorderNodeListGenerator();
     rootNode.accept(nlg);

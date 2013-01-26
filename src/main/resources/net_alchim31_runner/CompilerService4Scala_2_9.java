@@ -8,6 +8,9 @@ import javax.tools.Diagnostic.Kind;
 import javax.tools.DiagnosticListener;
 import javax.tools.FileObject;
 
+//#set scalaVersion 2.9.2
+//#repo central m2:http://repo1.maven.org/maven2/
+//#from org.scala-lang:scala-compiler:${scalaVersion}
 import scala.collection.immutable.Nil;
 import scala.tools.nsc.Global;
 import scala.tools.nsc.Settings;
@@ -18,22 +21,20 @@ import scala.tools.nsc.util.BatchSourceFile;
 import scala.tools.nsc.util.Position;
 import scala.tools.nsc.util.SourceFile;
 
+//#set rojVersion 0.3.0-SNAPSHOT
+//#repo lib m2:file://${app.home}/lib
+//#from net.alchim31.runner:run_on_jvm:${rojVersion}
 /**
  * Not ThreadSafe
  * 
  * @author dwayne
  */
 // TODO remove useless args from the "help"
-// TODO use the scalacompiler of the same version from scala-library
-public class CompilerService4Scala_2_9 extends CompilerService {
-  @Override
-  boolean accept(FileObject f) throws Exception {
-    return f.getName().endsWith(".scala");
-  }
+public class CompilerService4Scala_2_9 implements CompilerService {
 
   // TODO support options (parse into settings)
   @Override
-  boolean compileToDir(File dest, final FileObject src, List<File> classpath, List<String> options, final DiagnosticListener<FileObject> diagnostics) throws Exception {
+  public boolean compileToDir(File dest, final FileObject src, List<File> classpath, List<String> options, final DiagnosticListener<FileObject> diagnostics) throws Exception {
     final Settings settings = new Settings();
     settings.usejavacp().tryToSetFromPropertyValue("true");
     // settings.stopAfter().tryToSetColon(Nil.$colon$colon("jvm"));
@@ -48,7 +49,7 @@ public class CompilerService4Scala_2_9 extends CompilerService {
       cp = (cp == null) ? Nil.$colon$colon(path) : cp.$colon$colon(path);
     }
     if (cp != null) {
-      // settings.classpath().tryToSet(cp);
+      settings.classpath().tryToSet(cp);
     }
     // val ss = new Settings(scalacError)
     // reporter = new ConsoleReporter(ss)

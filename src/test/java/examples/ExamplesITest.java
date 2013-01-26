@@ -77,11 +77,11 @@ public class ExamplesITest {
     Assert.assertEquals("2.9.2 Hello World ! " + s + "\n", runAndCaptureOut(new File(_basedir, "HelloWorld2_9.scala").getPath(), s));
   }
   
-  @Test
-  public void run_HelloworldScala210_WithArgs() throws Exception {
-    String s = String.valueOf(Math.random());
-    Assert.assertEquals("2.10.0 Hello World ! " + s + "\n", runAndCaptureOut(new File(_basedir, "HelloWorld2_10.scala").getPath(), s));
-  }
+//  @Test
+//  public void run_HelloworldScala210_WithArgs() throws Exception {
+//    String s = String.valueOf(Math.random());
+//    Assert.assertEquals("2.10.0 Hello World ! " + s + "\n", runAndCaptureOut(new File(_basedir, "HelloWorld2_10.scala").getPath(), s));
+//  }
   
   @Test
   public void run_HelloworldScala_WithArgs_from_gist() throws Exception {

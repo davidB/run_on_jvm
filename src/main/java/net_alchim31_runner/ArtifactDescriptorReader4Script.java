@@ -10,28 +10,20 @@ import org.sonatype.aether.RepositoryListener;
 import org.sonatype.aether.RepositorySystemSession;
 import org.sonatype.aether.artifact.Artifact;
 import org.sonatype.aether.impl.ArtifactDescriptorReader;
-import org.sonatype.aether.impl.ArtifactResolver;
 import org.sonatype.aether.impl.VersionResolver;
 import org.sonatype.aether.resolution.ArtifactDescriptorException;
 import org.sonatype.aether.resolution.ArtifactDescriptorRequest;
 import org.sonatype.aether.resolution.ArtifactDescriptorResult;
-import org.sonatype.aether.resolution.ArtifactRequest;
 import org.sonatype.aether.resolution.ArtifactResolutionException;
-import org.sonatype.aether.resolution.ArtifactResult;
 import org.sonatype.aether.resolution.VersionRequest;
 import org.sonatype.aether.resolution.VersionResolutionException;
 import org.sonatype.aether.spi.locator.Service;
 import org.sonatype.aether.spi.locator.ServiceLocator;
-import org.sonatype.aether.util.artifact.SubArtifact;
 import org.sonatype.aether.util.listener.DefaultRepositoryEvent;
 
 public class ArtifactDescriptorReader4Script implements ArtifactDescriptorReader, Service {
-//  final static String      LAYOUT_M2   = "default";
-//  final static String      LAYOUT_GIST = "gist";
-//  
   private ScriptService _scriptService;
   private VersionResolver  _versionResolver;
-  private ArtifactResolver _artifactResolver;
   private ArtifactDescriptorReader _defaultArtifactDescriptorReader;
 
   @Override
@@ -40,8 +32,6 @@ public class ArtifactDescriptorReader4Script implements ArtifactDescriptorReader
     // _logger = locator.getService(Logger.class);
     // setRemoteRepositoryManager(locator.getService(RemoteRepositoryManager.class));
     _versionResolver = locator.getService(VersionResolver.class);
-    _artifactResolver = locator.getService(ArtifactResolver.class);
-    // _artifactDescriptorReaderNext =
     _defaultArtifactDescriptorReader = locator.getService(DefaultArtifactDescriptorReader.class);
   }
 
@@ -66,7 +56,7 @@ public class ArtifactDescriptorReader4Script implements ArtifactDescriptorReader
     ArtifactDescriptorResult result = new ArtifactDescriptorResult(request);
     try {
       result = checkVersion(session, result);
-      result = loadInfoFromScriptSource(session, result);
+      result = loadInfoFromScriptSource(result);
       return result;
     } catch (VersionResolutionException e) {
       result.addException(e);
@@ -105,7 +95,7 @@ public class ArtifactDescriptorReader4Script implements ArtifactDescriptorReader
     return result;
   }
 
-  private final ArtifactDescriptorResult loadInfoFromScriptSource(RepositorySystemSession session, ArtifactDescriptorResult result) throws Exception {
+  private final ArtifactDescriptorResult loadInfoFromScriptSource(ArtifactDescriptorResult result) throws Exception {
     ArtifactDescriptorRequest request = result.getRequest();
     Artifact artifact = request.getArtifact();
 //    Artifact sourceArtifact = artifact;
@@ -118,7 +108,7 @@ public class ArtifactDescriptorReader4Script implements ArtifactDescriptorReader
 //    ArtifactResult resolveResult = _artifactResolver.resolveArtifact(session, resolveRequest);
 //    result.setRepository(resolveResult.getRepository());
 //    sourceArtifact = resolveResult.getArtifact();
-    return readFromScriptInfo(_scriptService.findScriptInfo(new URI(artifact.getProperty(ScriptInfo.KEY_URI, null))), result);
+    return readFromScriptInfo(_scriptService.findScriptInfo(new URI(artifact.getProperty(ScriptInfo.KEY_URI, null)), null), result);
   }
 
   private final ArtifactDescriptorResult readFromScriptInfo(ScriptInfo info, ArtifactDescriptorResult result) throws Exception {

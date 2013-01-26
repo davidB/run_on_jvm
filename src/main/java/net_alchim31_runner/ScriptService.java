@@ -3,6 +3,7 @@ package net_alchim31_runner;
 import java.io.File;
 import java.io.InputStream;
 import java.net.URI;
+import java.net.URL;
 import java.security.MessageDigest;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -38,14 +39,14 @@ public class ScriptService implements Service {
   
   // TODO build a more clean/efficient parsing of the data (may be with parboiled ?)
   // HACKME protected to allow unit test
-  private ScriptInfo newScriptInfo(FileObject fo) throws Exception {
+  private ScriptInfo newScriptInfo(FileObject fo, Properties override) throws Exception {
     URI uri = fo.toUri();
     ScriptInfo b = new ScriptInfo(newArtifact(uri), fo);
-    return parseData(b);
+    return parseData(b, override);
   }
 
   // TODO build a more clean/efficient parsing of the data (may be with parboiled ?)
-  private ScriptInfo parseData(ScriptInfo out) throws Exception {
+  private ScriptInfo parseData(ScriptInfo out, Properties override) throws Exception {
     Pattern setRegEx = Pattern.compile("set\\s+(\\S+)\\s+(\\S+)");
     Pattern repoM2RegEx = Pattern.compile("repo\\s+(\\S+)\\s+m2:((http|file):\\S+)");
     //Pattern repoRawRegEx = Pattern.compile("repo\\s+(\\S+)\\s+raw:((http|file|dir):\\S*\\$\\{artifactId\\}\\S+)$");
@@ -53,7 +54,7 @@ public class ScriptService implements Service {
     // Pattern.compile("from\\s+([\\w\\-\\._\\$\\{\\}]+):([\\w\\-\\._\\$\\{\\}]+):([\\w\\-\\._\\$\\{\\}]+)(:([\\w\\-\\._]+))?"
     // );
     // <groupId>:<artifactId>[:<extension>[:<classifier>]]:<version>
-    Pattern artifactRegEx = Pattern.compile("from\\s+(\\S+)");
+    Pattern artifactRegEx = Pattern.compile("from\\s+(\\S+)\\s*(provided|compile)?");
     Pattern mainClassRegEx = Pattern.compile("mainClassName\\s+(\\S+)");
     URI uri = out.src.toUri();
     CharSequence data = out.src.getCharContent(true);
@@ -68,7 +69,8 @@ public class ScriptService implements Service {
         String stmt = line.substring(p + 3);
         Matcher m;
         if ((m = setRegEx.matcher(stmt)) != null && m.matches()) {
-          props.put(m.group(1), m.group(2));
+          String k = m.group(1);
+          props.put(k, override.getProperty(k, m.group(2)));
         } else if ((m = repoM2RegEx.matcher(stmt)) != null && m.matches()) {
           out.repositories.add(new RemoteRepository(m.group(1), "default", StringUtils.interpolate(m.group(2), props)));
         } else if ((m = artifactRegEx.matcher(stmt)) != null && m.matches()) {
@@ -79,10 +81,11 @@ public class ScriptService implements Service {
             from = dir + from.substring("dir:".length());
           }
           from = StringUtils.interpolate(from, props);
+          String scope = m.groupCount() > 1 ? m.group(2) : "compile";
           if (from.startsWith("http:") || from.startsWith("file:")) {
-            out.dependencies.add(new Dependency(newArtifact(new URI(from)), "compile"));
+            out.dependencies.add(new Dependency(newArtifact(new URI(from)), scope));
           } else {
-            out.dependencies.add(new Dependency(new DefaultArtifact(from), "compile"));
+            out.dependencies.add(new Dependency(new DefaultArtifact(from), scope));
           }
         } else if ((m = mainClassRegEx.matcher(stmt)) != null && m.matches()) {
           out.mainClassName = m.group(1);
@@ -100,7 +103,13 @@ public class ScriptService implements Service {
     String version = StringUtils.toHex(md5.digest(uri.getPath().getBytes("utf-8"))) + "-SNAPSHOT";
     String extension = FileUtils.extension(uri.getPath()) + ".jar";
     String artifactId = FileUtils.basename2(uri.getPath());
-    String groupId = ScriptInfo.GROUPID_PREFIX + ("file".equals(uri.getScheme())? "local" : uri.getHost().replace('.', '_'));
+    String groupId = ScriptInfo.GROUPID_PREFIX;
+    switch(uri.getScheme()) {
+      case "file": groupId += "local"; break;
+      case "classpath": groupId += "classpath"; break;
+      case "http":
+      case "https": groupId += uri.getHost().replace('.', '_'); break;
+    }
     Artifact b = new DefaultArtifact(groupId, artifactId, extension, version);
 
     Map<String, String> props = new HashMap<String,String>(b.getProperties());
@@ -117,16 +126,20 @@ public class ScriptService implements Service {
 
   private FileObject newFileObject(final URI key) throws Exception {
     String content = "";
-    try(InputStream input = key.toURL().openStream()) {
+    URL url = ("classpath".equals(key.getScheme())) ? Thread.currentThread().getContextClassLoader().getResource(key.getPath().substring(1)) : key.toURL();
+    try(InputStream input = url.openStream()) {
       content = IOUtil.toString(input, "UTF-8");
     }
     return new StringFileObject(key, content);
   }
 
-  public ScriptInfo findScriptInfo(URI key) throws Exception {
+  public ScriptInfo findScriptInfo(URI key, Properties override) throws Exception {
     ScriptInfo b = _map.get(key);
     if (b == null) {
-      b = newScriptInfo(newFileObject(key)) ;
+      if (override == null) {
+        override = System.getProperties();
+      }
+      b = newScriptInfo(newFileObject(key), override) ;
       _map.put(key, b);
     }
     return b;
@@ -144,6 +157,8 @@ public class ScriptService implements Service {
    */
   public List<File> newClasspath(ScriptInfo si) throws Exception {
     URI uri = si.src.toUri();
+    
+    System.err.println("Resolving dependencies...");
     DependencyService ds = _locator.getService(DependencyService.class);
     RepositorySystemSession session = ds.newSession();
 
@@ -164,18 +179,7 @@ public class ScriptService implements Service {
     }
     if (needCompilation) {
       FileObject src = si.src;
-      CompilerService cs = null;
-      for (CompilerService cs0 : _locator.getServices(CompilerService.class)) {
-        if (cs0.accept(src)) {
-          cs = cs0;
-          break;
-        }
-      }
-      if (cs == null) {
-        throw new IllegalStateException("no compilers accept " + src);
-      }
-      jar.getParentFile().mkdirs();
-
+      CompilerServiceProvider cs = _locator.getService(CompilerServiceProvider.class);
       DiagnosticCollector<javax.tools.FileObject> diagnostics = new DiagnosticCollector<javax.tools.FileObject>();
       boolean b = cs.compileToJar(jar, src, classpath, new LinkedList<String>(), diagnostics);
       for(javax.tools.Diagnostic<? extends javax.tools.FileObject> d : diagnostics.getDiagnostics()){

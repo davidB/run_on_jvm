@@ -13,13 +13,8 @@ import javax.tools.JavaFileObject;
 import javax.tools.StandardLocation;
 
 //TODO may be use plexus-compiler-javac / plexus-compiler-manager / plexus-compiler-api
-public class CompilerService4Java extends CompilerService{
+public class CompilerService4Java implements CompilerService{
   public CompilerService4Java() {
-  }
-  
-  @Override
-  boolean accept(FileObject f) throws Exception {
-    return f.getName().endsWith(".java");
   }
   
   //TODO add reporter of error, ...
@@ -27,7 +22,7 @@ public class CompilerService4Java extends CompilerService{
   //  see http://www.accordess.com/wpblog/an-overview-of-java-compilation-api-jsr-199/
   //TODO find how to run in isolated classloader
   @Override
-  boolean compileToDir(File dest, FileObject src, List<File> classpath, List<String> options, DiagnosticListener<javax.tools.FileObject> diagnostics) throws Exception {
+  public boolean compileToDir(File dest, FileObject src, List<File> classpath, List<String> options, DiagnosticListener<javax.tools.FileObject> diagnostics) throws Exception {
 //    ClassWorld world = new ClassWorld();
 //    ClassRealm javacRealm = world.newRealm("javac");
 //    //javacRealm.addConstituent( containerJarUrl );
