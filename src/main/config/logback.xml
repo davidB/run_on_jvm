@@ -15,7 +15,7 @@
 		<target>System.err</target>
 	</appender>
 
-	<logger name="roj" level="warn" additivity="false">
+	<logger name="roj" level="info" additivity="false">
 		<appender-ref ref="STDERR" />
 	</logger>
 	<root level="debug">
