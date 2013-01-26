@@ -31,7 +31,7 @@ public class WorkspaceReader4Script implements WorkspaceReader, Service {
     try {
       String uri = artifact.getProperty(ScriptInfo.KEY_URI, null);
       if (uri != null && artifact.getGroupId().startsWith(ScriptInfo.GROUPID_PREFIX)) {
-        return compile(new URI(uri));
+        return findJar(new URI(uri));
       }
     } catch(Exception exc) {
       exc.printStackTrace();
@@ -48,8 +48,8 @@ public class WorkspaceReader4Script implements WorkspaceReader, Service {
     return Collections.emptyList();
   }
 
-  public File compile(URI v) throws Exception {
+  public File findJar(URI v) throws Exception {
     ScriptService ss = _locator.getService(ScriptService.class);
-    return ss.findClasspath(v).get(0);
+    return ss.newClasspath(ss.findScriptInfo(v)).get(0);
   }
 }

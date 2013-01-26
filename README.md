@@ -59,7 +59,7 @@ Every files under examples directory should works !
 1. Install jdk
 2. Download : `wget -O run_on_jvm.jar https://oss.sonatype.org/content/repositories/snapshots/net/alchim31/runner/run_on_jvm/0.2.0-SNAPSHOT/run_on_jvm-0.2.0-20130125.195111-1-onejar.jar`
 
-3. Optional create a script `roj` in the PATH with `java -jar run_on_jvm.jar $*`
+3. Optional create a script `roj` in the PATH with `java -jar run_on_jvm.jar $*` you can reuse [examples/roj](examples/roj)
 5. Optional register as env (no tested)
 TDB
 
@@ -77,9 +77,10 @@ TDB
 
 * local cache = $HOME/.m2/repository
 * mainClassName (in default package), can be redefined = filename - extension 
-* artifactId = md5 (base64) of the path
+* artifactId = fileName - fileExtension
 * groupId = "script.local" for local file and "script.<hostname>" for remote file
-* version = 0.0.0-SNAPSHOT
+* extension = fileExtension + ".jar"
+* version = <md5 (hex) of the path>-SNAPSHOT
 
 ### configuration (optional)
 
@@ -90,7 +91,7 @@ The configuration is a list of definitions, every definitions starts with "//#".
       //#repo central m2:http://repo1.maven.org/maven2/
       //#from org.apache.commons:commons-lang3:3.1
 
-  see [examples/escape_html_with_deps.java]()
+  see [examples/escape_html_with_deps.java](examples/escape_html_with_deps.java)
   no repositories define by default    
 * Dependency : other local script
 

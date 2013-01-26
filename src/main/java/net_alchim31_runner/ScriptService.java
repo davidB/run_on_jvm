@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.StringTokenizer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -15,9 +16,7 @@ import java.util.regex.Pattern;
 import javax.tools.DiagnosticCollector;
 import javax.tools.FileObject;
 
-import org.codehaus.plexus.util.Base64;
 import org.codehaus.plexus.util.IOUtil;
-import org.codehaus.plexus.util.StringUtils;
 import org.sonatype.aether.RepositorySystemSession;
 import org.sonatype.aether.artifact.Artifact;
 import org.sonatype.aether.graph.Dependency;
@@ -30,7 +29,8 @@ import org.sonatype.aether.util.artifact.DefaultArtifact;
  * Note Thread-Safe
  */
 public class ScriptService implements Service {
-  private final HashMap<URI, CacheEntry> _map = new HashMap<URI, CacheEntry>();
+
+  private final HashMap<URI, ScriptInfo> _map = new HashMap<URI, ScriptInfo>();
   private ServiceLocator _locator;
 
   public ScriptService() {
@@ -38,13 +38,14 @@ public class ScriptService implements Service {
   
   // TODO build a more clean/efficient parsing of the data (may be with parboiled ?)
   // HACKME protected to allow unit test
-  private ScriptInfo newScriptInfo(URI uri) throws Exception {
-    ScriptInfo b = new ScriptInfo(newArtifact(uri));
-    return parseData(uri, b);
+  private ScriptInfo newScriptInfo(FileObject fo) throws Exception {
+    URI uri = fo.toUri();
+    ScriptInfo b = new ScriptInfo(newArtifact(uri), fo);
+    return parseData(b);
   }
 
   // TODO build a more clean/efficient parsing of the data (may be with parboiled ?)
-  private ScriptInfo parseData(URI uri, ScriptInfo out) throws Exception {
+  private ScriptInfo parseData(ScriptInfo out) throws Exception {
     Pattern setRegEx = Pattern.compile("set\\s+(\\S+)\\s+(\\S+)");
     Pattern repoM2RegEx = Pattern.compile("repo\\s+(\\S+)\\s+m2:((http|file):\\S+)");
     //Pattern repoRawRegEx = Pattern.compile("repo\\s+(\\S+)\\s+raw:((http|file|dir):\\S*\\$\\{artifactId\\}\\S+)$");
@@ -54,11 +55,12 @@ public class ScriptService implements Service {
     // <groupId>:<artifactId>[:<extension>[:<classifier>]]:<version>
     Pattern artifactRegEx = Pattern.compile("from\\s+(\\S+)");
     Pattern mainClassRegEx = Pattern.compile("mainClassName\\s+(\\S+)");
-    String data = findContent(uri);
-    StringTokenizer t = new StringTokenizer(data, "\n\r", false);
-    HashMap<String, Object> props = new HashMap<String, Object>();
+    URI uri = out.src.toUri();
+    CharSequence data = out.src.getCharContent(true);
+    StringTokenizer t = new StringTokenizer(data.toString(), "\n\r", false);
+    Properties props = new Properties(System.getProperties());
     out.mainClassName = FileUtils.basename2(uri.getPath());
-    
+
     while (t.hasMoreTokens()) {
       String line = t.nextToken();
       int p = line.indexOf("//#");
@@ -68,7 +70,7 @@ public class ScriptService implements Service {
         if ((m = setRegEx.matcher(stmt)) != null && m.matches()) {
           props.put(m.group(1), m.group(2));
         } else if ((m = repoM2RegEx.matcher(stmt)) != null && m.matches()) {
-          out.repositories.add(new RemoteRepository(m.group(1), "default", interpolate(m.group(2), props)));
+          out.repositories.add(new RemoteRepository(m.group(1), "default", StringUtils.interpolate(m.group(2), props)));
         } else if ((m = artifactRegEx.matcher(stmt)) != null && m.matches()) {
           String from = m.group(1);
           if (from.startsWith("dir:")) {
@@ -76,7 +78,7 @@ public class ScriptService implements Service {
             dir = dir.substring(0, dir.lastIndexOf('/') + 1);
             from = dir + from.substring("dir:".length());
           }
-          from = interpolate(from, props);
+          from = StringUtils.interpolate(from, props);
           if (from.startsWith("http:") || from.startsWith("file:")) {
             out.dependencies.add(new Dependency(newArtifact(new URI(from)), "compile"));
           } else {
@@ -90,25 +92,15 @@ public class ScriptService implements Service {
     return out;
   }
 
-  private String interpolate(String txt, Map<String, Object> props) {
-    String b = txt;
-    if (props.size() > 0 && b.indexOf("${") > 0) {
-      b = StringUtils.interpolate(b, props);
-    }
-    if (b.indexOf("${") > 0) { 
-      b = StringUtils.interpolate(b, System.getProperties());
-    }
-    return b;
-  }
   // TODO define (plugable ?) strategy for remote uri
   // eg :
   // https://gist.github.com/raw/4183893/962aa266b58511f277ca5a163aca572206bc13ca/HelloWorld.java
   private Artifact newArtifact(URI uri) throws Exception {
     MessageDigest md5 = MessageDigest.getInstance("MD5");
-    String version = "0.0.0-SNAPSHOT";
-    String extension = "jar";//FileUtils.extension(uri.getPath());
-    String artifactId = encode(md5.digest(uri.getPath().getBytes("utf-8")));
-    String groupId = ScriptInfo.GROUPID_PREFIX + ("file".equals(uri.getScheme())? "local" : uri.getHost());
+    String version = StringUtils.toHex(md5.digest(uri.getPath().getBytes("utf-8"))) + "-SNAPSHOT";
+    String extension = FileUtils.extension(uri.getPath()) + ".jar";
+    String artifactId = FileUtils.basename2(uri.getPath());
+    String groupId = ScriptInfo.GROUPID_PREFIX + ("file".equals(uri.getScheme())? "local" : uri.getHost().replace('.', '_'));
     Artifact b = new DefaultArtifact(groupId, artifactId, extension, version);
 
     Map<String, String> props = new HashMap<String,String>(b.getProperties());
@@ -123,67 +115,35 @@ public class ScriptService implements Service {
     return b;
   }
 
-  //TODO to optimize
-  private String encode(byte[] v) {
-    byte[] e0 = Base64.encodeBase64(v);
-    int padd = 0;
-    for(int i= e0.length -1; i > -1; i--) {
-      if (e0[i] == '+') e0[i] = '.';
-      else if (e0[i] == '/') e0[i] = '-';
-      else if (e0[i] == '=') padd++;
+  private FileObject newFileObject(final URI key) throws Exception {
+    String content = "";
+    try(InputStream input = key.toURL().openStream()) {
+      content = IOUtil.toString(input, "UTF-8");
     }
-    return new String(e0, 0, e0.length - padd);
+    return new StringFileObject(key, content);
   }
-  
-  public CacheEntry findOrCreate(URI key) throws Exception {
-    CacheEntry b = _map.get(key);
+
+  public ScriptInfo findScriptInfo(URI key) throws Exception {
+    ScriptInfo b = _map.get(key);
     if (b == null) {
-      b = new CacheEntry(key);
+      b = newScriptInfo(newFileObject(key)) ;
       _map.put(key, b);
     }
     return b;
   }
-
-  public String findContent(URI key) throws Exception {
-    CacheEntry b = findOrCreate(key);
-    if (b.content == null) {
-      try(InputStream input = key.toURL().openStream()) {
-        b.content = IOUtil.toString(input, "UTF-8");
-      }
-    }
-    return b.content;
-  }
-
-  public FileObject findFileObject(final URI key) throws Exception {
-    return new StringFileObject(key, findContent(key));
-  }
-
-  public ScriptInfo findScriptInfo(URI key) throws Exception {
-    CacheEntry b = findOrCreate(key);
-    if (b.info == null) {
-      b.info = newScriptInfo(b.uri);
-    }
-    return b.info;
-  }
-
-  private static class CacheEntry {
-    URI        uri;
-    String     content;
-    ScriptInfo info;
-
-    public CacheEntry(URI uri0) {
-      super();
-      this.uri = uri0;
-    }
-  }
   
   /**
-   * @param si the input ScriptInfo
-   * @return the List of jar, the first file is the jar resulting from si compilation
+   * Create a runtime classpath including dependencies ( + transitives) and the jar of the script (result of the compilation) 
+   * * every file (jars) in the classpath are downloaded in cache if needed
+   * * download jar and dependencies if needed
+   * * compile the script into the jar (if jar doesn't exist or older than the (local) script (no check for remote script))
+   *  
+   * @param si the script (entry point)
+   * @return the List of jar, the first file is the jar resulting from script compilation
    * @throws Exception
    */
-  public List<File> findClasspath(URI v) throws Exception {
-    ScriptInfo si = findScriptInfo(v);
+  public List<File> newClasspath(ScriptInfo si) throws Exception {
+    URI uri = si.src.toUri();
     DependencyService ds = _locator.getService(DependencyService.class);
     RepositorySystemSession session = ds.newSession();
 
@@ -198,12 +158,12 @@ public class ScriptService implements Service {
     File jar = new File(session.getLocalRepository().getBasedir(), session.getLocalRepositoryManager().getPathForLocalArtifact(si.artifact));
 
     boolean needCompilation = !jar.exists();
-    if (!needCompilation && "file".equals(v.getScheme())) {
-      // TODO use checksum instead of lastModified (check performance and quality) 
-      needCompilation = jar.lastModified() <= new File(v.getPath()).lastModified();  
+    if (!needCompilation && "file".equals(uri.getScheme())) {
+      // TODO use checksum instead of lastModified (check performance and quality)
+      needCompilation = jar.lastModified() <= new File(uri.getPath()).lastModified();
     }
     if (needCompilation) {
-      FileObject src = findFileObject(v);
+      FileObject src = si.src;
       CompilerService cs = null;
       for (CompilerService cs0 : _locator.getServices(CompilerService.class)) {
         if (cs0.accept(src)) {

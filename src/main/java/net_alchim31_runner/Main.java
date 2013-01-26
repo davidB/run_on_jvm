@@ -100,7 +100,7 @@ public class Main {
 	  ServiceLocator locator = newServiceLocator();
 	  ScriptService ss = locator.getService(ScriptService.class);
     ScriptInfo si = ss.findScriptInfo(v);
-    List<File> classpath = ss.findClasspath(v);
+    List<File> classpath = ss.newClasspath(si);
     return new RunInfo(si.mainClassName, FileUtils.toURIs(classpath), EMPTY_LIST_STRING, EMPTY_LIST_STRING);
 	}
 	
