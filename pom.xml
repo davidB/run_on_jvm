@@ -217,6 +217,7 @@
 					<repositoryName>lib</repositoryName>
 					<!-- repositoryLayout>flat</repositoryLayout-->
 					<!-- useWildcardClassPath>true</useWildcardClassPath-->
+					<copyConfigurationDirectory>true</copyConfigurationDirectory>
 					<programs>
 						<program>
 							<mainClass>net_alchim31_runner.Main</mainClass>
@@ -249,6 +250,7 @@
 				<configuration>
 					<systemPropertyVariables>
 						<logback.configurationFile>src/main/config/logback.xml</logback.configurationFile>
+						<app.home>target/appassembler</app.home>
 					</systemPropertyVariables>
 				</configuration>
 			</plugin>

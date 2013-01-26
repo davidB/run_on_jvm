@@ -8,6 +8,17 @@
 		<fileSet>
 			<directory>${project.build.directory}/appassembler</directory>
 			<outputDirectory>/</outputDirectory>
+			<excludes>
+				<exclude>bin/**</exclude>
+			</excludes>
+		</fileSet>
+		<fileSet>
+			<directory>${project.build.directory}/appassembler</directory>
+			<outputDirectory>/</outputDirectory>
+			<fileMode>777</fileMode>
+			<includes>
+				<include>bin/**</include>
+			</includes>
 		</fileSet>
 	</fileSets>
 </assembly>
