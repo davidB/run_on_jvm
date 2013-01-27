@@ -8,7 +8,7 @@
 
 	<groupId>net.alchim31.runner</groupId>
 	<artifactId>run_on_jvm</artifactId>
-	<version>0.3.0</version>
+	<version>0.3.1-SNAPSHOT</version>
 	<name>${project.artifactId}</name>
 	<description>A tool to run jvm script (java, scala, ...) with dependencies</description>
 	<inceptionYear>2013</inceptionYear>
