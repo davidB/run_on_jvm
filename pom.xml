@@ -96,10 +96,15 @@
 			<artifactId>maven-aether-provider</artifactId>
 			<version>3.0.4</version>
 		</dependency>
-		<dependency>
+		<!-- dependency>
 			<groupId>org.codehaus.plexus</groupId>
 			<artifactId>plexus-classworlds</artifactId>
 			<version>2.4.2</version>
+		</dependency-->
+		<dependency>
+			<groupId>org.codehaus.plexus</groupId>
+			<artifactId>plexus-utils</artifactId>
+			<version>2.1</version>
 		</dependency>
 		<!-- Custom Language -->
 		<dependency>
@@ -107,12 +112,14 @@
 			<artifactId>rhino</artifactId>
 			<version>1.7R4</version>
 			<scope>provided</scope>
+			<optional>true</optional>
 		</dependency>
 		<dependency>
 			<groupId>org.scala-lang</groupId>
 			<artifactId>scala-compiler</artifactId>
 			<version>2.9.2</version>
 			<scope>provided</scope>
+			<optional>true</optional>
 		</dependency>
 		<dependency>
 			<groupId>org.slf4j</groupId>
@@ -123,6 +130,7 @@
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-jdk14</artifactId>
 			<version>1.7.2</version>
+			<scope>runtime</scope>
 		</dependency>		
 		<!-- dependency>
 			<groupId>ch.qos.logback</groupId>
@@ -143,6 +151,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-jar-plugin</artifactId>
+				<version>2.4</version>
 				<inherited>true</inherited>
 				<configuration>
 					<archive>
@@ -238,6 +247,32 @@
 				</configuration>
 			</plugin-->
 			<plugin>
+				<groupId>net.rumati.maven.plugins</groupId>
+				<artifactId>velocity-maven-plugin</artifactId>
+				<version>0.3.0</version>
+				<executions>
+					<execution>
+						<id>make-bin-script</id>
+						<phase>prepare-package</phase>
+						<goals>
+							<goal>velocity</goal>
+						</goals>
+						<configuration>
+							<transformations>
+								<transformation>
+									<template>${project.basedir}/src/main/app/bin/roj.cmd.vm</template>
+									<outputFile>${project.build.directory}/app/bin/roj.cmd</outputFile>
+								</transformation>
+								<transformation>
+									<template>${project.basedir}/src/main/app/bin/roj.vm</template>
+									<outputFile>${project.build.directory}/app/bin/roj</outputFile>
+								</transformation>
+							</transformations>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
 				<artifactId>maven-assembly-plugin</artifactId>
 				<version>2.3</version>
 				<executions>
@@ -250,7 +285,7 @@
 					</execution>
 				</executions>
 				<configuration>
-				    <tarLongFileMode>gnu</tarLongFileMode>
+					<tarLongFileMode>gnu</tarLongFileMode>
 					<descriptors>
 						<descriptor>src/main/assembly/app.xml</descriptor>
 					</descriptors>

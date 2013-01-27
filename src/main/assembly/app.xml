@@ -10,11 +10,12 @@
 			<directory>${project.basedir}/src/main/app</directory>
 			<outputDirectory>/</outputDirectory>
 			<excludes>
-				<exclude>bin/**</exclude>
+				<exclude>**/*.vm</exclude>
+				<exclude>bin</exclude>
 			</excludes>
 		</fileSet>
 		<fileSet>
-			<directory>${project.basedir}/src/main/app</directory>
+			<directory>${project.build.directory}/app</directory>
 			<outputDirectory>/</outputDirectory>
 			<fileMode>777</fileMode>
 			<includes>
@@ -30,7 +31,7 @@
 				<include>NOTICE*</include>
 			</includes>
 		</fileSet>
-		<!-- WORKAROUND because <repository> doesn't copy project's artifact (jar), only the pom-->
+		<!-- WORKAROUND because <repository> doesn't copy project's artifact (jar), only the pom -->
 		<fileSet>
 			<directory>${project.build.directory}</directory>
 			<outputDirectory>/lib/net/alchim31/runner/${project.artifactId}/${project.version}</outputDirectory>
