@@ -1,9 +1,7 @@
 package net_alchim31_runner;
 
 import java.io.File;
-import java.io.InputStream;
 import java.net.URI;
-import java.net.URL;
 import java.security.MessageDigest;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -17,7 +15,6 @@ import java.util.regex.Pattern;
 import javax.tools.DiagnosticCollector;
 import javax.tools.FileObject;
 
-import org.codehaus.plexus.util.IOUtil;
 import org.sonatype.aether.RepositorySystemSession;
 import org.sonatype.aether.artifact.Artifact;
 import org.sonatype.aether.graph.Dependency;
@@ -124,22 +121,13 @@ public class ScriptService implements Service {
     return b;
   }
 
-  private FileObject newFileObject(final URI key) throws Exception {
-    String content = "";
-    URL url = ("classpath".equals(key.getScheme())) ? Thread.currentThread().getContextClassLoader().getResource(key.getPath().substring(1)) : key.toURL();
-    try(InputStream input = url.openStream()) {
-      content = IOUtil.toString(input, "UTF-8");
-    }
-    return new StringFileObject(key, content);
-  }
-
   public ScriptInfo findScriptInfo(URI key, Properties override) throws Exception {
     ScriptInfo b = _map.get(key);
     if (b == null) {
       if (override == null) {
         override = System.getProperties();
       }
-      b = newScriptInfo(newFileObject(key), override) ;
+      b = newScriptInfo(new StringFileObject(key), override) ;
       _map.put(key, b);
     }
     return b;
