@@ -11,33 +11,41 @@
 	<version>0.3.0-SNAPSHOT</version>
 	<name>${project.artifactId}</name>
 	<description>A tool to run jvm script (java, scala, ...) with dependencies</description>
-	<inceptionYear>2012</inceptionYear>
+	<inceptionYear>2013</inceptionYear>
 	<licenses>
 		<license>
-			<name>Unlicense</name>
-			<url>http://unlicense.org</url>
+			<name>Public domain (Unlicense)</name>
+			<url>http://unlicense.org/</url>
 			<distribution>repo</distribution>
 		</license>
 	</licenses>
+
+	<scm>
+		<connection>scm:git:git://github.com/davidB/${project.artifactId}.git</connection>
+		<developerConnection>scm:git:git@github.com:davidB/${project.artifactId}.git</developerConnection>
+		<url>http://github.com/davidB/${project.artifactId}/</url>
+	</scm>
+
+	<issueManagement>
+		<system>github</system>
+		<url>http://github.com/davidB/${project.artifactId}/issues#issue/</url>
+	</issueManagement>
+	<developers>
+		<developer>
+			<name>David Bernard</name>
+			<timezone>+1</timezone>
+		</developer>
+	</developers>
 
 	<properties>
 		<maven.compiler.source>1.7</maven.compiler.source>
 		<maven.compiler.target>1.7</maven.compiler.target>
 		<encoding>UTF-8</encoding>
-		<mavenVersion>3.0.3</mavenVersion>
+		<project.build.sourceEncoding>${encoding}</project.build.sourceEncoding>
+		<mavenVersion>3.0.4</mavenVersion>
 		<wagonVersion>1.0</wagonVersion>
 		<aetherVersion>1.13.1</aetherVersion>
 	</properties>
-
-	<dependencyManagement>
-		<dependencies>
-			<dependency>
-				<groupId>org.codehaus.plexus</groupId>
-				<artifactId>plexus-utils</artifactId>
-				<version>2.1</version>
-			</dependency>
-		</dependencies>
-	</dependencyManagement>
 
 	<dependencies>
 		<!-- dependency>
@@ -96,11 +104,6 @@
 			<artifactId>maven-aether-provider</artifactId>
 			<version>3.0.4</version>
 		</dependency>
-		<!-- dependency>
-			<groupId>org.codehaus.plexus</groupId>
-			<artifactId>plexus-classworlds</artifactId>
-			<version>2.4.2</version>
-		</dependency-->
 		<dependency>
 			<groupId>org.codehaus.plexus</groupId>
 			<artifactId>plexus-utils</artifactId>
@@ -132,11 +135,6 @@
 			<version>1.7.2</version>
 			<scope>runtime</scope>
 		</dependency>		
-		<!-- dependency>
-			<groupId>ch.qos.logback</groupId>
-			<artifactId>logback-classic</artifactId>
-			<version>1.0.9</version>
-		</dependency-->		
 		<!-- Test -->
 		<dependency>
 			<groupId>junit</groupId>
@@ -163,89 +161,6 @@
 					</archive>
 				</configuration>
 			</plugin>
-			<!-- OneJar via onejar-maven-plugin add 0.5s at startup (vs shade) -->
-			<!-- TODO try proguard -->
-			<!-- plugin>
-				<artifactId>maven-shade-plugin</artifactId>
-				<version>1.3.3</version>
-				<executions>
-					<execution>
-						<phase>package</phase>
-						<goals>
-							<goal>shade</goal>
-						</goals>
-						<configuration>
-							<shadedArtifactAttached>true</shadedArtifactAttached>
-							<shadedClassifierName>onejar</shadedClassifierName>
-						</configuration>
-					</execution>
-				</executions>
-			</plugin -->
-			<!-- 
-			<plugin>
-				<groupId>com.github.wvengen</groupId>
-				<artifactId>proguard-maven-plugin</artifactId>
-				<version>2.0.7-SNAPSHOT</version>
-				<executions>
-					<execution>
-						<phase>package</phase>
-						<goals>
-							<goal>proguard</goal>
-						</goals>
-					</execution>
-				</executions>
-				<configuration>
-					<obfuscate>false</obfuscate>
-					<injar>${project.build.finalName}-onejar.jar</injar>
-					<outjar>${project.build.finalName}-small.jar</outjar>
-					<includeDependency>false</includeDependency>
-					<outputDirectory>${project.build.directory}</outputDirectory>
-					<proguardInclude>${basedir}/proguard.conf</proguardInclude>
-					<options>
-                        <option>-allowaccessmodification</option>
-                        <option>-keep public class net_alchim31_runner.Main { *; }</option>
-                    </options>
-					<libs>
-						<lib>${java.home}/lib/rt.jar</lib>
-						<lib>${java.home}/lib/jsse.jar</lib>
-					</libs>
-				</configuration>
-			</plugin>
-			<plugin>
-				<groupId>org.codehaus.mojo</groupId>
-				<artifactId>animal-sniffer-maven-plugin</artifactId>
-				<version>1.6</version>
-			</plugin>
-			-->
-			<!-- plugin>
-				<groupId>org.codehaus.mojo</groupId>
-				<artifactId>appassembler-maven-plugin</artifactId>
-				<version>1.3</version>
-				<executions>
-					<execution>
-						<phase>package</phase>
-						<goals>
-							<goal>assemble</goal>
-						</goals>
-					</execution>
-				</executions>
-				<configuration>
-				    <assembleDirectory>${project.build.directory}/${project.build.finalName}-app/${project.build.finalName}</assembleDirectory>
-					<licenseHeaderFile>${basedir}/UNLICENSE</licenseHeaderFile>
-					<repositoryName>lib</repositoryName>
-					<copyConfigurationDirectory>true</copyConfigurationDirectory>
-					<configurationSourceDirectory>src/main/app/etc</configurationSourceDirectory>
-					<programs>
-						<program>
-							<mainClass>net_alchim31_runner.Main</mainClass>
-							<name>roj</name>
-						</program>
-					</programs>
-					<binFileExtensions>
-						<windows>.cmd</windows>
-					</binFileExtensions>
-				</configuration>
-			</plugin-->
 			<plugin>
 				<groupId>net.rumati.maven.plugins</groupId>
 				<artifactId>velocity-maven-plugin</artifactId>
