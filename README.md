@@ -40,40 +40,47 @@ Some possible usages :
 * Cache compilation result and reuse it for next run
 * Download dependencies (direct + transitive) into local cache ($HOME/.m2/repository) from maven's repositories
 * Build classpath from local cache
+* Download compiler jar (scala-compiler, rhinojs) the first time a .scala or .js need to be compiled (could take few minutes)
 
 Every files under examples directory should works !
 
 ### TODO
 
-* Download jar needed by compilers (scala-compiler-2.x, rhinojs, ...)
 * Cache classpath result and reuse it for next run (+ option to force recomputation)
-* Support Windows
-* Add logs
-* Add options (to debug, to logs)
+* Optimize startup time
+* Support Windows (to test + to fix)
+* Add logs for download
 * Support maven' settings.xml (proxy, local repo location)
+* Provide a mini-gui text editor to ease experiment, ...
 * Add-ons for IDE, Text Editor 
-* Reduce size of onejar (3.8M)
+* Reduce size (2.5M)
+* Promote, documentation, ...
 
 ## Install
 
-1. Install jdk
-2. Download : `wget -O run_on_jvm.jar https://oss.sonatype.org/content/repositories/snapshots/net/alchim31/runner/run_on_jvm/0.2.0-SNAPSHOT/run_on_jvm-0.2.0-20130125.195111-1-onejar.jar`
+0. Install jdk
+1. Download : `wget https://oss.sonatype.org/content/repositories/releases/net/alchim31/runner/run_on_jvm/0.3.0/run_on_jvm-0.3.0-app.tar.gz`
+2. Unarchive : `tar -xzvf run_on_jvm-0.3.0-app.tar.gz`
+3. Update PATH: export PATH=<home on run_on_jvm-0.3.0>/bin:$PATH
+4. Optional register as env (no tested)
 
-3. Optional create a script `roj` in the PATH with `java -jar run_on_jvm.jar $*` you can reuse [examples/roj](examples/roj)
-5. Optional register as env (no tested)
-TDB
+Play !
 
 ## Usage
 
 ### run locale script
 
-    java -jar run_on_jvm.jar Toto.java
+    roj Toto.java
+    # to be verbose
+    roj --roj-verbose Foo.scala
 
 ### run remote script
 
-    java -jar run_on_jvm.jar https://gist.github.com/raw/4183893/69eb99e07c936c9b5315cb3c23bff9eee20d7c5a/HelloWorld.java
+    roj https://gist.github.com/raw/4183893/69eb99e07c936c9b5315cb3c23bff9eee20d7c5a/HelloWorld.java
 
 ### conventions
+
+The compiled scripts are stored in a local cache (as jar) with the following rules :
 
 * local cache = $HOME/.m2/repository
 * mainClassName (in default package), can be redefined = filename - extension 
@@ -131,7 +138,7 @@ For an already compiled classes with no dependencies :
 Anyone and everyone is welcome to contribute.
 
 * via issue, doc, blog
-* via fork/pull requet
+* via fork/pull request
 
 ## Build
 
