@@ -59,10 +59,18 @@ Every files under examples directory should works !
 ## Install
 
 0. Install jdk
-1. Download : `wget https://oss.sonatype.org/content/repositories/releases/net/alchim31/runner/run_on_jvm/0.3.0/run_on_jvm-0.3.0-app.tar.gz`
-2. Unarchive : `tar -xzvf run_on_jvm-0.3.0-app.tar.gz`
-3. Update PATH: export PATH=<home on run_on_jvm-0.3.0>/bin:$PATH
-4. Optional register as env (no tested)
+1. Download & Unarchive in target dir:
+
+        cd $HOME/apps
+        curl -0 https://oss.sonatype.org/content/repositories/releases/net/alchim31/runner/run_on_jvm/0.3.0/run_on_jvm-0.3.0-app.tar.gz | tar -xz
+
+2. Update PATH
+
+        export PATH=$HOME/apps/run_on_jvm-0.3.0/bin:$PATH
+        #or
+        ln -s $HOME/apps/run_on_jvm-0.3.0/bin/roj $HOME/bin/roj
+
+3. Optional register as env (no tested)
 
 Play !
 
