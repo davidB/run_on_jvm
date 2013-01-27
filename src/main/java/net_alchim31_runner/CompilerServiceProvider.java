@@ -3,7 +3,6 @@ package net_alchim31_runner;
 import java.io.File;
 import java.net.URI;
 import java.net.URLClassLoader;
-import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 import java.util.jar.Manifest;
@@ -21,7 +20,6 @@ public class CompilerServiceProvider implements Service{
 
   //TODO add an option to not search/resolve/create dependency (OPTIM, user place every jar manually in roj's classpath)
   //TODO may be define compiler as a dependency and use same classpath for compile and run ?
-  @SuppressWarnings("resource")
   private CompilerContext find(FileObject src, List<File> classpath) throws Exception {
     CompilerContext b = null;
     String path = src.toUri().getPath();
@@ -31,30 +29,34 @@ public class CompilerServiceProvider implements Service{
       b.loader = Thread.currentThread().getContextClassLoader();
     } else if (path.endsWith(".js")) {
       Properties p = new Properties(System.getProperties());
-      p.setProperty("rojVersion", "0.3.0-SNAPSHOT");
-      ScriptInfo siCompiler = _ss.findScriptInfo(new URI("classpath:/net_alchim31_runner/CompilerService4Rhino.java"), p);
-      List<File> cpCompiler = _ss.newClasspath(siCompiler);
-      ClassLoader cl = new URLClassLoader(FileUtils.toURLs(cpCompiler), Thread.currentThread().getContextClassLoader());
-      b = new CompilerContext();
-      b.cs = (CompilerService) cl.loadClass("net_alchim31_runner.CompilerService4Rhino").newInstance();
-      b.loader = cl;
+      p.setProperty("rojVersion", findRojVersion());
+      b = loadFrom(
+          "net_alchim31_runner.CompilerService4Rhino"
+        , new URI("classpath:/net_alchim31_runner/CompilerService4Rhino.java")
+        , p
+      );      
     } else if (path.endsWith(".scala")) {
       String scalaVersion = findScalaVersion(src.toUri(), classpath);
       Properties p = new Properties(System.getProperties());
-      p.setProperty("rojVersion", "0.3.0-SNAPSHOT");
+      p.setProperty("rojVersion", findRojVersion());
       p.setProperty("scalaVersion", scalaVersion);
       String scalaSuffix = scalaVersion.substring(0, scalaVersion.indexOf('.', 2)).replace('.', '_');
-      ScriptInfo siCompiler = _ss.findScriptInfo(new URI("classpath:/net_alchim31_runner/CompilerService4Scala_" + scalaSuffix + ".java"), p);
-      List<File> cpCompiler = _ss.newClasspath(siCompiler);
-      //Collections.reverse(cpCompiler);
-      ClassLoader cl = new URLClassLoader(FileUtils.toURLs(cpCompiler), Thread.currentThread().getContextClassLoader());
-      b = new CompilerContext();
-      b.cs = (CompilerService) cl.loadClass("net_alchim31_runner.CompilerService4Scala_" + scalaSuffix).newInstance();
-      b.loader = cl;
+      b = loadFrom(
+          "net_alchim31_runner.CompilerService4Scala_" + scalaSuffix
+        , new URI("classpath:/net_alchim31_runner/CompilerService4Scala_" + scalaSuffix + ".java")
+        , p
+      );
     }
     return b;
   }
 
+  private String findRojVersion() throws Exception{
+    String v = getClass().getPackage().getImplementationVersion();
+    if (v == null) {
+      v = System.getProperty("rojVersion"); // used for test
+    }
+    return v;
+  }
   private String findScalaVersion(URI uri, List<File> classpath) throws Exception {
     String scalaVersion = null;
     Pattern p = Pattern.compile("scala-library-(.*)\\.jar");
@@ -70,6 +72,18 @@ public class CompilerServiceProvider implements Service{
     return scalaVersion;
   }
   
+  
+  @SuppressWarnings("resource")
+  private CompilerContext loadFrom(String clazzStr, URI clazzUri, Properties override) throws Exception {
+    ScriptInfo siCompiler = _ss.findScriptInfo(clazzUri, override);
+    List<File> cpCompiler = _ss.newClasspath(siCompiler);
+    //Collections.reverse(cpCompiler);
+    ClassLoader cl = new URLClassLoader(FileUtils.toURLs(cpCompiler), Thread.currentThread().getContextClassLoader());
+    CompilerContext b = new CompilerContext();
+    b.cs = (CompilerService) cl.loadClass(clazzStr).newInstance();
+    b.loader = cl;
+    return b;
+  }
 //  private CompilerContext loadFrom(String clazzStr, DefaultArtifact... deps) throws Exception {
 //    ClassWorld w = new ClassWorld("zero", null);
 //    w.newRealm("runner", getClass().getClassLoader());
@@ -101,6 +115,7 @@ public class CompilerServiceProvider implements Service{
 //    return cc;
 //  }
   
+  @SuppressWarnings("resource")
   boolean compileToJar(File dest, FileObject src, List<File> classpath, List<String> options, DiagnosticListener<javax.tools.FileObject> diagnostics) throws Exception {
     Main.logger.info("Prepare compiler... for {}", src);
     CompilerContext cc = find(src, classpath);
@@ -132,7 +147,8 @@ public class CompilerServiceProvider implements Service{
       if (cl0 instanceof URLClassLoader) {
         URLClassLoader cl = (URLClassLoader) Thread.currentThread().getContextClassLoader();
         Main.logger.warn("compiler classpath: \n\t" + StringUtils.join(cl.getURLs(), "\n\t"));
-      }      throw exc;
+      }
+      throw exc;
     } finally {
       if (currentCl != compilerCl) {
         Thread.currentThread().setContextClassLoader(currentCl);

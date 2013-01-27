@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.logging.Level;
 
 import org.apache.maven.repository.internal.DefaultArtifactDescriptorReader;
 import org.apache.maven.repository.internal.MavenServiceLocator;
@@ -25,8 +26,8 @@ import org.sonatype.aether.spi.connector.RepositoryConnectorFactory;
 import org.sonatype.aether.spi.locator.ServiceLocator;
 import org.sonatype.maven.wagon.AhcWagon;
 
-import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.LoggerContext;
+//import ch.qos.logback.classic.Level;
+//import ch.qos.logback.classic.LoggerContext;
 
 //TODO remove useless service, cache when no longer needed (after compile) 
 public class Main {
@@ -37,16 +38,19 @@ public class Main {
   public static void main(String[] args) throws Exception {
     URI uri = null;
     try {
-      LoggerContext lc = (LoggerContext) LoggerFactory.getILoggerFactory();
-      lc.getLogger("roj").setLevel(Level.WARN);
+      java.util.logging.Logger ologger = java.util.logging.Logger.getLogger("roj");
+      ologger.setLevel(Level.WARNING);
       ArrayList<String> subArgs = new ArrayList<>(args.length);
       for (String arg : args) {
         if ("--roj-verbose".equals(arg)) {
-          lc.getLogger("roj").setLevel(Level.INFO);
+          //lc.getLogger("roj").setLevel(Level.INFO);
+          ologger.setLevel(Level.INFO);
         } else if ("--roj-quiet".equals(arg)) {
-          lc.getLogger("roj").setLevel(Level.ERROR);
+          //lc.getLogger("roj").setLevel(Level.ERROR);
+          ologger.setLevel(Level.SEVERE);
         } else if ("--roj-debug".equals(arg)) {
-          lc.getLogger("roj").setLevel(Level.ALL);
+          //lc.getLogger("roj").setLevel(Level.ALL);
+          ologger.setLevel(Level.ALL);
         } else if (arg.startsWith("--roj-")) {
           //ignore
         } else if (uri == null) {

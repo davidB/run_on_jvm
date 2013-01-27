@@ -3,22 +3,47 @@
 	<id>app</id>
 	<formats>
 		<format>tar.gz</format>
+		<format>dir</format>
 	</formats>
 	<fileSets>
 		<fileSet>
-			<directory>${project.build.directory}/appassembler</directory>
+			<directory>${project.basedir}/src/main/app</directory>
 			<outputDirectory>/</outputDirectory>
 			<excludes>
 				<exclude>bin/**</exclude>
 			</excludes>
 		</fileSet>
 		<fileSet>
-			<directory>${project.build.directory}/appassembler</directory>
+			<directory>${project.basedir}/src/main/app</directory>
 			<outputDirectory>/</outputDirectory>
 			<fileMode>777</fileMode>
 			<includes>
 				<include>bin/**</include>
 			</includes>
 		</fileSet>
+		<fileSet>
+			<directory>${project.basedir}</directory>
+			<outputDirectory>/</outputDirectory>
+			<includes>
+				<include>README*</include>
+				<include>*LICENSE*</include>
+				<include>NOTICE*</include>
+			</includes>
+		</fileSet>
+		<!-- WORKAROUND because <repository> doesn't copy project's artifact (jar), only the pom-->
+		<fileSet>
+			<directory>${project.build.directory}</directory>
+			<outputDirectory>/lib/net/alchim31/runner/${project.artifactId}/${project.version}</outputDirectory>
+			<includes>
+				<include>${project.build.finalName}.jar</include>
+			</includes>
+		</fileSet>
 	</fileSets>
+	<repositories>
+		<repository>
+			<outputDirectory>/lib</outputDirectory>
+			<includeMetadata>true</includeMetadata>
+			<scope>runtime</scope>
+		</repository>
+	</repositories>
 </assembly>

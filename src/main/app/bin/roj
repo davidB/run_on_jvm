@@ -1,0 +1,121 @@
+#!/bin/sh
+# ----------------------------------------------------------------------------
+# 	This is free and unencumbered software released into the public domain.
+#
+# 	Anyone is free to copy, modify, publish, use, compile, sell, or
+# 	distribute this software, either in source code form or as a compiled
+# 	binary, for any purpose, commercial or non-commercial, and by any
+# 	means.
+#
+# 	In jurisdictions that recognize copyright laws, the author or authors
+# 	of this software dedicate any and all copyright interest in the
+# 	software to the public domain. We make this dedication for the benefit
+# 	of the public at large and to the detriment of our heirs and
+# 	successors. We intend this dedication to be an overt act of
+# 	relinquishment in perpetuity of all present and future rights to this
+# 	software under copyright law.
+#
+# 	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+# 	EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+# 	MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+# 	IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+# 	OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+# 	ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+# 	OTHER DEALINGS IN THE SOFTWARE.
+#
+# 	For more information, please refer to <http://unlicense.org/>
+# ----------------------------------------------------------------------------
+
+
+# resolve links - $0 may be a softlink
+PRG="$0"
+
+while [ -h "$PRG" ]; do
+  ls=`ls -ld "$PRG"`
+  link=`expr "$ls" : '.*-> \(.*\)$'`
+  if expr "$link" : '/.*' > /dev/null; then
+    PRG="$link"
+  else
+    PRG=`dirname "$PRG"`/"$link"
+  fi
+done
+
+PRGDIR=`dirname "$PRG"`
+BASEDIR=`cd "$PRGDIR/.." >/dev/null; pwd`
+
+
+
+# OS specific support.  $var _must_ be set to either true or false.
+cygwin=false;
+darwin=false;
+case "`uname`" in
+  CYGWIN*) cygwin=true ;;
+  Darwin*) darwin=true
+           if [ -z "$JAVA_VERSION" ] ; then
+             JAVA_VERSION="CurrentJDK"
+           else
+             echo "Using Java version: $JAVA_VERSION"
+           fi
+           if [ -z "$JAVA_HOME" ] ; then
+             JAVA_HOME=/System/Library/Frameworks/JavaVM.framework/Versions/${JAVA_VERSION}/Home
+           fi
+           ;;
+esac
+
+if [ -z "$JAVA_HOME" ] ; then
+  if [ -r /etc/gentoo-release ] ; then
+    JAVA_HOME=`java-config --jre-home`
+  fi
+fi
+
+# For Cygwin, ensure paths are in UNIX format before anything is touched
+if $cygwin ; then
+  [ -n "$JAVA_HOME" ] && JAVA_HOME=`cygpath --unix "$JAVA_HOME"`
+  [ -n "$CLASSPATH" ] && CLASSPATH=`cygpath --path --unix "$CLASSPATH"`
+fi
+
+# If a specific java binary isn't specified search for the standard 'java' binary
+if [ -z "$JAVACMD" ] ; then
+  if [ -n "$JAVA_HOME"  ] ; then
+    if [ -x "$JAVA_HOME/jre/sh/java" ] ; then
+      # IBM's JDK on AIX uses strange locations for the executables
+      JAVACMD="$JAVA_HOME/jre/sh/java"
+    else
+      JAVACMD="$JAVA_HOME/bin/java"
+    fi
+  else
+    JAVACMD=`which java`
+  fi
+fi
+
+if [ ! -x "$JAVACMD" ] ; then
+  echo "Error: JAVA_HOME is not defined correctly." 1>&2
+  echo "  We cannot execute $JAVACMD" 1>&2
+  exit 1
+fi
+
+if [ -z "$REPO" ]
+then
+  REPO="$BASEDIR"/lib
+fi
+
+CLASSPATH=$CLASSPATH_PREFIX:"$BASEDIR"/etc:"$REPO"/org/sonatype/aether/aether-api/1.13.1/aether-api-1.13.1.jar:"$REPO"/org/sonatype/aether/aether-spi/1.13.1/aether-spi-1.13.1.jar:"$REPO"/org/sonatype/aether/aether-util/1.13.1/aether-util-1.13.1.jar:"$REPO"/org/sonatype/aether/aether-impl/1.13.1/aether-impl-1.13.1.jar:"$REPO"/org/sonatype/aether/aether-connector-file/1.13.1/aether-connector-file-1.13.1.jar:"$REPO"/org/sonatype/aether/aether-connector-wagon/1.13.1/aether-connector-wagon-1.13.1.jar:"$REPO"/org/codehaus/plexus/plexus-utils/2.1/plexus-utils-2.1.jar:"$REPO"/org/apache/maven/wagon/wagon-provider-api/1.0/wagon-provider-api-1.0.jar:"$REPO"/org/sonatype/maven/wagon-ahc/1.2.1/wagon-ahc-1.2.1.jar:"$REPO"/com/ning/async-http-client/1.6.5/async-http-client-1.6.5.jar:"$REPO"/org/jboss/netty/netty/3.2.5.Final/netty-3.2.5.Final.jar:"$REPO"/org/apache/maven/maven-aether-provider/3.0.4/maven-aether-provider-3.0.4.jar:"$REPO"/org/apache/maven/maven-model/3.0.4/maven-model-3.0.4.jar:"$REPO"/org/apache/maven/maven-model-builder/3.0.4/maven-model-builder-3.0.4.jar:"$REPO"/org/codehaus/plexus/plexus-interpolation/1.14/plexus-interpolation-1.14.jar:"$REPO"/org/apache/maven/maven-repository-metadata/3.0.4/maven-repository-metadata-3.0.4.jar:"$REPO"/org/codehaus/plexus/plexus-component-annotations/1.5.5/plexus-component-annotations-1.5.5.jar:"$REPO"/org/codehaus/plexus/plexus-classworlds/2.4.2/plexus-classworlds-2.4.2.jar:"$REPO"/org/slf4j/slf4j-api/1.7.2/slf4j-api-1.7.2.jar:"$REPO"/org/slf4j/slf4j-jdk14/1.7.2/slf4j-jdk14-1.7.2.jar:"$REPO"/net/alchim31/runner/run_on_jvm/0.3.0-SNAPSHOT/run_on_jvm-0.3.0-SNAPSHOT.jar
+
+# For Cygwin, switch paths to Windows format before running java
+if $cygwin; then
+  [ -n "$CLASSPATH" ] && CLASSPATH=`cygpath --path --windows "$CLASSPATH"`
+  [ -n "$JAVA_HOME" ] && JAVA_HOME=`cygpath --path --windows "$JAVA_HOME"`
+  [ -n "$HOME" ] && HOME=`cygpath --path --windows "$HOME"`
+  [ -n "$BASEDIR" ] && BASEDIR=`cygpath --path --windows "$BASEDIR"`
+  [ -n "$REPO" ] && REPO=`cygpath --path --windows "$REPO"`
+fi
+
+exec "$JAVACMD" $JAVA_OPTS  \
+  -classpath "$CLASSPATH" \
+  -Dapp.name="roj" \
+  -Dapp.pid="$$" \
+  -Dapp.repo="$REPO" \
+  -Dapp.home="$BASEDIR" \
+  -Dbasedir="$BASEDIR" \
+  net_alchim31_runner.Main \
+  "$@"

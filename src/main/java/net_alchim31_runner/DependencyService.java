@@ -120,7 +120,7 @@ public class DependencyService implements Service {
 
   ResolveResult resolve(RepositorySystemSession session, List<Dependency> dependencies, List<Dependency> managedDependencies, List<RemoteRepository> remoteRepositories) throws Exception {
     CollectRequest collectRequest = new CollectRequest(dependencies, managedDependencies, remoteRepositories);
-    DependencyRequest dependencyRequest = new DependencyRequest(collectRequest, new ScopeDependencyFilter("provided"));
+    DependencyRequest dependencyRequest = new DependencyRequest(collectRequest, new ScopeDependencyFilter("test"));
     DependencyNode rootNode = _system.resolveDependencies(session, dependencyRequest).getRoot();
     PreorderNodeListGenerator nlg = new PreorderNodeListGenerator();
     rootNode.accept(nlg);
