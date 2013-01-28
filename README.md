@@ -33,8 +33,6 @@ Some possible usages :
 
 ## Features
 
-### DONE
-
 * Compile and Run script *.java
 * Compile and Run script *.scala
 * Cache compilation result and reuse it for next run
@@ -44,17 +42,7 @@ Some possible usages :
 
 Every files under examples directory should works !
 
-### TODO
-
-* Cache classpath result and reuse it for next run (+ option to force recomputation)
-* Optimize startup time
-* Support Windows (to test + to fix)
-* Add logs for download
-* Support maven' settings.xml (proxy, local repo location)
-* Provide a mini-gui text editor to ease experiment, ...
-* Add-ons for IDE, Text Editor 
-* Reduce size (2.5M)
-* Promote, documentation, ...
+see [TODO](TODO.md) for next release
 
 ## Install
 
