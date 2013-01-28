@@ -58,11 +58,11 @@ Every files under examples directory should works !
 
 ## Install
 
-0. Install jdk
+0. Install jdk-1.7
 1. Download & Unarchive in target dir:
 
         cd $HOME/apps
-        curl -0 https://oss.sonatype.org/content/repositories/releases/net/alchim31/runner/run_on_jvm/0.3.0/run_on_jvm-0.3.0-app.tar.gz | tar -xz
+        curl -0 http://repo1.maven.org/maven2/net/alchim31/runner/run_on_jvm/0.3.0/run_on_jvm-0.3.0-app.tar.gz | tar -xz
 
 2. Update PATH
 
