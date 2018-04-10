@@ -164,7 +164,7 @@
 			<plugin>
 				<groupId>net.rumati.maven.plugins</groupId>
 				<artifactId>velocity-maven-plugin</artifactId>
-				<version>0.3.0</version>
+				<version>0.3.1</version>
 				<executions>
 					<execution>
 						<id>make-bin-script</id>
